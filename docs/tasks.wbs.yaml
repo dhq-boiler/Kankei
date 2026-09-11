@@ -1,7 +1,7 @@
 version: 3
 title: Kankei MVP
 createdAt: 2026-09-11T05:47:00.6493944Z
-modifiedAt: 2026-09-11T08:34:23.6140286Z
+modifiedAt: 2026-09-11T08:42:25.8838989Z
 tasks:
 - id: initial-vertical-slice
   title: 初期縦切り（保存・復元・オーバーレイ・ローカル API）
@@ -51,8 +51,8 @@ tasks:
 - id: release-auto-update
   title: バージョン情報・インストーラー・GitHub Release配布と自動更新
   estimateHours: 8
-  remainingHours: 8
-  notes: Kataの既存ダイアログを参考にバージョン情報と更新操作を作成。公開dhq-boiler/Kankeiを新設し、GitHub Actionsで検証・インストーラー作成・Release公開。起動中の定期確認、通知、自動ダウンロードと終了時適用、即時更新時の状態保存と再起動を実装。正常/最新版/未インストール/通信失敗/二重実行/終了処理を検証する。
+  remainingHours: 0
+  notes: Kataの既存ダイアログを参考にバージョン情報と更新操作を作成。公開dhq-boiler/Kankeiを新設し、GitHub Actionsで検証・インストーラー作成・Release公開。起動中の定期確認、通知、自動ダウンロードと終了時適用、即時更新時の状態保存と再起動を実装。正常/最新版/未インストール/通信失敗/二重実行/終了処理を検証する。 2026-09-11 完了：濃紺UIと512pxロゴを適用。公開dhq-boiler/Kankeiを作成、ActionsのCIとRelease生成が成功しv0.1.1にSetup/Portable/nupkg/feedを公開。本体KankeiAppと保存データKankeiを分離。ローカル92テスト成功。JidoDebuggerで検証用0.1.0のインストール、自動ダウンロード、今すぐ更新、0.1.1での再起動と最新版表示を実機確認。終了時適用・通信失敗・二重実行等は単体テストで確認。実OSシャットダウンはyoutube-playback-stateの残作業。
 - id: monitor-preview
   title: メイン画面右側にモニター配置と復元予定ウィンドウのプレビュー
   estimateHours: 2
