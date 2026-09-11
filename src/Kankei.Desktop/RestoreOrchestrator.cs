@@ -73,7 +73,9 @@ public sealed class RestoreOrchestrator(WindowDiscovery discovery, LayoutStore s
                     }
                     var handle = saved.YouTube is not null
                         ? await ChromeYouTubeState.RestoreAsync(saved, discovery)
-                        : discovery.FindWindow(saved);
+                        : saved.BrowserUrl is not null && adapter is null
+                            ? await ChromePageState.RestoreAsync(saved, discovery)
+                            : discovery.FindWindow(saved);
                     if (handle == IntPtr.Zero)
                     {
                         if (adapter is null)

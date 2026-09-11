@@ -15,7 +15,8 @@ public sealed record SavedWindow(
     long ProcessStartTicks = 0,
     SavedMonitor? Monitor = null,
     WindowBounds? NormalBounds = null,
-    YouTubePlaybackState? YouTube = null)
+    YouTubePlaybackState? YouTube = null,
+    string? BrowserUrl = null)
 {
     [System.Text.Json.Serialization.JsonIgnore]
     public bool PreserveCurrentYouTube { get; init; }

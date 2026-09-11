@@ -1,7 +1,7 @@
 version: 3
 title: Kankei MVP
 createdAt: 2026-09-11T05:47:00.6493944Z
-modifiedAt: 2026-09-11T09:01:37.3037431Z
+modifiedAt: 2026-09-11T09:53:03.2599573Z
 tasks:
 - id: initial-vertical-slice
   title: 初期縦切り（保存・復元・オーバーレイ・ローカル API）
@@ -73,3 +73,8 @@ tasks:
   estimateHours: 1
   remainingHours: 0
   notes: 選択プロファイルを名前付き確認ダイアログ経由で削除。キャンセル時は保持、保存・復元中と未選択は無効。削除後に一覧とプレビューを更新。JidoDebuggerで一時プロファイルを使って確認。 2026-09-11 キャンセル時のファイル保持、確定時の削除と一覧・プレビュー解除、未選択時の削除無効を実画面で確認。一時プロファイルは削除済み。
+- id: chrome-page-restore
+  title: Chromeの通常ページをURLで保存し未起動なら新規ウィンドウで復元
+  estimateHours: 3
+  remainingHours: 0
+  notes: Chromeの選択中タブのHTTP(S) URLを保存し、復元時はURL一致を確認して再利用。元ウィンドウが別ページへ移動していたら上書きせず新規ウィンドウを作成。YouTube専用処理と旧データ互換を維持。URL正規化・同じHWNDの別ページ・候補なし・重複呼び出し・起動失敗を検証し、JidoDebuggerで実画面を確認。 2026-09-11 実装完了。VS2026ビルド成功、112テスト成功。JidoDebuggerとRESTで別ページに移動した元ChromeのURLを保持した新規ウィンドウ復元、繰り返し呼び出し時の再利用、背景タブの選択とURL確認、モニター上の最大化を実機確認。検証用Chrome2ウィンドウと一時プロファイルは削除済み。旧プロファイルはページを開いて再保存が必要。日本語プロファイルのAPI作成LocationヘッダーもURLエンコードして201応答を確認。

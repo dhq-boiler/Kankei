@@ -55,6 +55,7 @@ public partial class App : System.Windows.Application
             try
             {
                 var windows = await adapters.CaptureAsync(discovery.Capture(), _shutdown.Token);
+                windows = await ChromePageState.CaptureAsync(windows, _shutdown.Token);
                 windows = await ChromeYouTubeState.CaptureAsync(windows, _shutdown.Token);
                 await store.SaveAsync("default", windows, _shutdown.Token);
             }

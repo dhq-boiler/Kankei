@@ -190,6 +190,7 @@ public partial class WindowSelectionWindow : Window
             if (await _store.GetAsync(name) is not null && System.Windows.MessageBox.Show(this,
                     $"「{name}」の保存済み配置を上書きしますか？", "配置の上書き", MessageBoxButton.YesNo) != MessageBoxResult.Yes) return;
             var windows = WindowSelection.CaptureSelected(selected, _discovery.Capture());
+            windows = await ChromePageState.CaptureAsync(windows, _closed.Token);
             if (includeYouTube) windows = await ChromeYouTubeState.CaptureAsync(windows, _closed.Token);
             var layout = await _store.SaveAsync(name, windows);
             await RefreshLayoutsAsync(layout.Id);

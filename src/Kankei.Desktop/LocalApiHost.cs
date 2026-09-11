@@ -23,9 +23,10 @@ public sealed class LocalApiHost(LayoutStore store, WindowDiscovery discovery, R
         {
             if (string.IsNullOrWhiteSpace(request.Name)) return Results.ValidationProblem(new Dictionary<string, string[]> { ["name"] = ["名前を指定してください。"] });
             var windows = await adapters.CaptureAsync(discovery.Capture(), ct);
+            windows = await ChromePageState.CaptureAsync(windows, ct);
             if (request.IncludeYouTube) windows = await ChromeYouTubeState.CaptureAsync(windows, ct);
             var layout = await store.SaveAsync(request.Name, windows, ct);
-            return Results.Created($"/v1/layouts/{layout.Id}", layout);
+            return Results.Created($"/v1/layouts/{Uri.EscapeDataString(layout.Id)}", layout);
         });
         _application.MapPost("/v1/layouts/{layoutId}/restore", async (string layoutId, RestoreRequest? request, CancellationToken ct) =>
         {

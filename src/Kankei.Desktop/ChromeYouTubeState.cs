@@ -10,7 +10,7 @@ namespace Kankei.Desktop;
 /// <summary>Captures the active YouTube tab in a specific Chrome window via accessibility.</summary>
 public static class ChromeYouTubeState
 {
-    private static readonly SemaphoreSlim RestoreGate = new(1);
+    internal static readonly SemaphoreSlim RestoreGate = new(1);
     private static bool IsChrome(SavedWindow window) => string.Equals(Path.GetFileName(window.ExecutablePath), "chrome.exe", StringComparison.OrdinalIgnoreCase);
 
     public static Task<YouTubePlaybackState?> CaptureWindowAsync(SavedWindow window, CancellationToken cancellationToken = default) =>
