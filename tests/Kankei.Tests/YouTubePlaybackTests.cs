@@ -4,6 +4,32 @@ namespace Kankei.Tests;
 
 public class YouTubePlaybackTests
 {
+    // BUG-1 / BV-1: loading at zero or a small timestamp offset must not trigger seek input.
+    [Theory]
+    [InlineData(0, false)]
+    [InlineData(96.99, false)]
+    [InlineData(97, true)]
+    [InlineData(100, true)]
+    [InlineData(103, true)]
+    [InlineData(103.01, false)]
+    [InlineData(double.NaN, false)]
+    [InlineData(double.PositiveInfinity, false)]
+    [InlineData(-1, false)]
+    public void WaitsForTimestampBeforeControllingPlayback(double position, bool ready)
+    {
+        var expected = new YouTubePlaybackState("https://youtube.com/watch?v=abc&list=PL123", 100, true);
+        Assert.Equal(ready, YouTubePlayback.IsAtRestorePosition(expected with { PositionSeconds = position }, expected));
+    }
+
+    // ST-1: a different playlist entry at the same time is not the restored video.
+    [Fact]
+    public void DoesNotControlNextPlaylistVideoAtSavedPosition()
+    {
+        var expected = new YouTubePlaybackState("https://youtube.com/watch?v=abc&list=PL123", 100, true);
+        var next = expected with { Url = "https://youtube.com/watch?v=next&list=PL123" };
+        Assert.False(YouTubePlayback.IsAtRestorePosition(next, expected));
+    }
+
     [Fact]
     public void PlaylistUrlRetainsVideoListAndIndexWithSavedTime()
     {

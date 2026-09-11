@@ -7,6 +7,14 @@ namespace Kankei.Desktop;
 
 public static class YouTubePlayback
 {
+    // Allow timestamp rounding and playback during page loading, consistent with
+    // the playing-state verification. A mismatch is observed, never key-corrected.
+    public static bool IsAtRestorePosition(YouTubePlaybackState current, YouTubePlaybackState expected) =>
+        SameVideo(current.Url, expected.Url)
+        && double.IsFinite(current.PositionSeconds) && current.PositionSeconds >= 0
+        && double.IsFinite(expected.PositionSeconds) && expected.PositionSeconds >= 0
+        && Math.Abs(current.PositionSeconds - expected.PositionSeconds) <= 3;
+
     public static string? NormalizeVideoUrl(string value)
     {
         if (!value.Contains("://", StringComparison.Ordinal)) value = "https://" + value;

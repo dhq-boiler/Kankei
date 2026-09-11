@@ -103,17 +103,14 @@ public static class ChromeYouTubeState
                 try
                 {
                     var current = await ReadForRestoreAsync(handle, cancellationToken);
-                    if (current is not null && YouTubePlayback.SameVideo(current.Url, saved.YouTube.Url))
+                    // Let the timestamp URL seek. Never focus the player or synthesize seek keys:
+                    // delayed loading/ads can otherwise trigger a repeated fast-forward loop.
+                    if (current is not null && YouTubePlayback.IsAtRestorePosition(current, saved.YouTube))
                     {
                         if (!current.IsPaused)
                         {
                             stable = 0;
                             await Task.Run(() => TogglePlayback(handle), cancellationToken);
-                        }
-                        else if (Math.Abs(current.PositionSeconds - saved.YouTube.PositionSeconds) > 1)
-                        {
-                            stable = 0;
-                            await Task.Run(() => Seek(handle, saved.YouTube.PositionSeconds), cancellationToken);
                         }
                         else if (++stable >= 3)
                         {
@@ -162,27 +159,6 @@ public static class ChromeYouTubeState
         ClickElement(handle, button);
     }
 
-    private static void Seek(IntPtr handle, double seconds)
-    {
-        using var automation = new UIA3Automation();
-        var progress = automation.FromHandle(handle).FindFirstDescendant(cf => cf.ByClassName("ytp-progress-bar"))
-            ?? throw new InvalidOperationException("YouTube の再生位置を取得できません。");
-        var current = YouTubePlayback.ParsePosition(Value(progress));
-        progress.Focus();
-        var delta = seconds - current;
-        if (Math.Abs(delta) >= 5)
-            SendPlayerKey(handle, delta > 0 ? (byte)0x27 : (byte)0x25);
-        else
-        {
-            // YouTube supports frame stepping while paused. Re-read time after each short batch.
-            for (var frame = 0; frame < 15; frame++)
-            {
-                SendPlayerKey(handle, delta > 0 ? (byte)0xBE : (byte)0xBC);
-                Thread.Sleep(20);
-            }
-        }
-    }
-
     private static void ClickElement(IntPtr handle, AutomationElement element)
     {
         if (GetForegroundWindow() != handle)
@@ -199,13 +175,6 @@ public static class ChromeYouTubeState
     [DllImport("user32.dll")] private static extern IntPtr GetAncestor(IntPtr handle, uint flags);
     [DllImport("user32.dll")] private static extern void mouse_event(uint flags, uint dx, uint dy, uint data, UIntPtr extraInfo);
 
-    private static void SendPlayerKey(IntPtr handle, byte key)
-    {
-        if (GetForegroundWindow() != handle)
-            throw new InvalidOperationException("入力先が変わったため Chrome の復元を中止しました。");
-        keybd_event(key, 0, 0, UIntPtr.Zero);
-        keybd_event(key, 0, 2, UIntPtr.Zero);
-    }
     private static void Navigate(IntPtr handle, string url)
     {
         ShowWindow(handle, 9);

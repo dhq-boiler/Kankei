@@ -3,6 +3,16 @@ title: Kankei MVP
 createdAt: 2026-09-11T05:47:00.6493944Z
 modifiedAt: 2026-09-11T11:39:19.9395024Z
 tasks:
+- id: release-0-1-8
+  title: YouTube早送り連打修正をv0.1.8として公開
+  estimateHours: 0.25
+  remainingHours: 0.25
+  notes: 先生のリリース指示に基づく。既存130テストとVS2026ビルド成功。修正とREADMEをコミットしタグをpush、Actionsのテスト・パッケージ生成と公開アセット・更新フィードを確認する。
+- id: youtube-restore-seek-loop
+  title: YouTube復元時のフォーカス移動と早送りキー連打を解消
+  estimateHours: 1
+  remainingHours: 0.25
+  notes: Kudaki MCP未公開・プロセス未起動のため停止時fallback。位置差を矢印/コマ送りキーで補正するループを削除。URLの時刻指定を待ち、同じ動画かつ位置差3秒以内でのみ再生状態を操作する。BUG-1 読込時の位置差、BV-1 許容差内外、ST-1 別の再生リスト動画を検証。VS2026 CommunityでDebugビルド成功、CLIで130テスト成功。実YouTubeでの低速読込・広告時の復元確認は未完了。デバッグ起動は既存インストール版の単一起動Mutexによりコード0で終了、vs-mcp UIAは対象プロセスなし。インストール版への適用・リリースは未実施。
 - id: initial-vertical-slice
   title: 初期縦切り（保存・復元・オーバーレイ・ローカル API）
   estimateHours: 8
