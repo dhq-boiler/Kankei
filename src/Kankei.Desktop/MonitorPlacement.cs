@@ -10,10 +10,8 @@ public static class MonitorPlacement
 
     public static WindowBounds Resolve(SavedWindow saved, IReadOnlyList<SavedMonitor> monitors)
     {
-        if (monitors.Count == 0) throw new InvalidOperationException("復元先のモニターがありません。");
         var visible = new WindowBounds(saved.Left, saved.Top, saved.Width, saved.Height);
-        var target = monitors.FirstOrDefault(x => saved.Monitor is not null && x.DeviceName == saved.Monitor.DeviceName)
-            ?? monitors.OrderByDescending(x => Overlap(saved.Monitor?.Bounds ?? visible, x.Bounds)).First();
+        var target = ResolveMonitor(saved, monitors);
         var normal = saved.NormalBounds ?? visible;
         if (saved.Monitor is { } old)
         {
@@ -29,6 +27,18 @@ public static class MonitorPlacement
         return new(Math.Clamp(normal.Left, area.Left, area.Left + area.Width - width),
             Math.Clamp(normal.Top, area.Top, area.Top + area.Height - height), width, height);
     }
+
+    public static SavedMonitor ResolveMonitor(SavedWindow saved, IReadOnlyList<SavedMonitor> monitors)
+    {
+        if (monitors.Count == 0) throw new InvalidOperationException("復元先のモニターがありません。");
+        var visible = new WindowBounds(saved.Left, saved.Top, saved.Width, saved.Height);
+        return monitors.FirstOrDefault(x => saved.Monitor is not null && x.DeviceName == saved.Monitor.DeviceName)
+            ?? monitors.OrderByDescending(x => Overlap(saved.Monitor?.Bounds ?? visible, x.Bounds)).First();
+    }
+
+    // Minimized windows use their normal placement as a reference, since they are not visible.
+    public static WindowBounds PreviewBounds(SavedWindow saved, IReadOnlyList<SavedMonitor> monitors) =>
+        saved.DisplayState == WindowDisplayState.Maximized ? ResolveMonitor(saved, monitors).WorkArea : Resolve(saved, monitors);
 
     private static long Overlap(WindowBounds a, WindowBounds b) =>
         Math.Max(0L, Math.Min((long)a.Left + a.Width, (long)b.Left + b.Width) - Math.Max(a.Left, b.Left)) *

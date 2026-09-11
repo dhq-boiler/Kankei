@@ -1,7 +1,7 @@
 version: 3
 title: Kankei MVP
 createdAt: 2026-09-11T05:47:00.6493944Z
-modifiedAt: 2026-09-11T07:43:45.3163649Z
+modifiedAt: 2026-09-11T08:34:23.6140286Z
 tasks:
 - id: initial-vertical-slice
   title: 初期縦切り（保存・復元・オーバーレイ・ローカル API）
@@ -33,3 +33,28 @@ tasks:
   estimateHours: 5
   remainingHours: 1
   notes: 選択したChromeウィンドウのYouTube動画URL・list/index・再生秒数・再生/一時停止を保存する。通常動画/再生リスト/一時停止/再生中/取得失敗/古い配置データを検証し、取得不能を黙って保存成功にしない。JidoDebuggerで実画面確認する。 手動呼び出し時は対象Chromeが再生中なら呼び出し直前の状態を一時保持して配置復元後に適用する。シャットダウン直前にも最新状態を取得し次回レジューム用に永続化する。プロファイルの配置定義と最新の再生チェックポイントは分離する。 2026-09-11 実装済み：現在の再生状態を優先する手動復元、既存Chromeの動画/再生リスト照合による二重起動防止、10秒ごとと終了/SessionEnding時のチェックポイント保存、原子的ファイル置換と旧記録保護。VS2026ビルド成功、77テスト成功。JidoDebuggerで保存時3:01:05から3:01:06の一時停止復元、現在位置優先の復元、新規Chrome起動後の停止復元、番号不一致でも既存ウィンドウを再利用し二重起動しないことを確認。検証用の追加Chromeは閉じ、一時プロファイルも削除。残り1時間は実Windowsシャットダウン/再起動順序と広告・低速回線下の実機確認。実シャットダウンは未実行。
+- id: app-logo-concept
+  title: Kankeiアプリロゴの初稿作成
+  estimateHours: 0.5
+  remainingHours: 0
+  notes: 還景（作業環境を保存・復元）の意味を反映したロゴを画像生成で試作し、会話内で提示する。
+- id: app-logo-assets
+  title: Kataと同構成のロゴ素材をassetsに格納
+  estimateHours: 0.5
+  remainingHours: 0
+  notes: 原画像を保存し、文字なしマークをSVG化。通常・ライト・透過のPNG7サイズとICOを生成して形式を検証する。
+- id: app-icon-integration
+  title: 実行ファイル・ウィンドウ・通知領域にアプリアイコンを設定
+  estimateHours: 0.5
+  remainingHours: 0
+  notes: VS2026ビルド成功、JidoDebuggerでタイトルバー・通知領域に新アイコンを表示確認。assets/icons/kankei.icoを埋め込み、EXE・WPFウィンドウ・NotifyIconで共用する。ビルドとJidoDebuggerによる実画面で確認する。
+- id: release-auto-update
+  title: バージョン情報・インストーラー・GitHub Release配布と自動更新
+  estimateHours: 8
+  remainingHours: 8
+  notes: Kataの既存ダイアログを参考にバージョン情報と更新操作を作成。公開dhq-boiler/Kankeiを新設し、GitHub Actionsで検証・インストーラー作成・Release公開。起動中の定期確認、通知、自動ダウンロードと終了時適用、即時更新時の状態保存と再起動を実装。正常/最新版/未インストール/通信失敗/二重実行/終了処理を検証する。
+- id: monitor-preview
+  title: メイン画面右側にモニター配置と復元予定ウィンドウのプレビュー
+  estimateHours: 2
+  remainingHours: 0
+  notes: 2026-09-11 VS2026ビルドと92テスト成功。JidoDebuggerで3画面の位置関係、defaultの2件の復元予定、チェックした1件の現在位置への切り替えを確認。現在のモニター領域を同比率で描画し、選択したプロファイルの復元予定位置を重ねる。最大化・最小化・切断時の配置を復元計算と共有し、選択対象の現在位置も確認可能にする。JidoDebuggerで表示を検証。

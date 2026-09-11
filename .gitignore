@@ -9,3 +9,6 @@
 TestResults/
 **/TestResults/
 *.log
+.tools/
+artifacts/
+publish/

@@ -1,0 +1,20 @@
+<UserControl x:Class="Kankei.Desktop.MonitorPreview"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    <Border Style="{StaticResource Card}">
+        <Grid>
+            <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition Height="*"/><RowDefinition Height="Auto"/><RowDefinition Height="180"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
+            <DockPanel><TextBlock Text="配置プレビュー" FontSize="19" FontWeight="SemiBold"/><TextBlock x:Name="MonitorCount" HorizontalAlignment="Right" Foreground="{StaticResource MutedBrush}" VerticalAlignment="Center"/></DockPanel>
+            <StackPanel Grid.Row="1" Margin="0,16,0,0">
+                <StackPanel Orientation="Horizontal"><Button x:Name="PlannedButton" Content="復元予定" Click="ShowPlanned" AutomationProperties.AutomationId="PreviewPlanned"/><Button x:Name="CurrentButton" Content="保存対象" Click="ShowCurrent" Margin="8,0,0,0" AutomationProperties.AutomationId="PreviewCurrent"/></StackPanel>
+                <TextBlock x:Name="Summary" Foreground="{StaticResource MutedBrush}" TextWrapping="Wrap" Margin="0,12,0,0" AutomationProperties.AutomationId="PreviewSummary"/>
+            </StackPanel>
+            <Border Grid.Row="2" Background="#101925" BorderBrush="{StaticResource LineBrush}" BorderThickness="1" CornerRadius="12" Margin="0,18,0,14" ClipToBounds="True" MinHeight="190">
+                <Canvas x:Name="Map" SizeChanged="MapSizeChanged" AutomationProperties.AutomationId="MonitorMap"/>
+            </Border>
+            <TextBlock Grid.Row="3" Text="ウィンドウ一覧 · ポインターを重ねると位置を強調" Foreground="{StaticResource MutedBrush}" FontSize="11" Margin="0,0,0,8"/>
+            <ScrollViewer Grid.Row="4" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled"><StackPanel x:Name="Entries"/></ScrollViewer>
+            <TextBlock Grid.Row="5" Text="現在のモニター構成に合わせた位置の目安です。最小化は通常位置を破線で表示します。" TextWrapping="Wrap" Foreground="{StaticResource MutedBrush}" FontSize="11" Margin="0,12,0,0"/>
+        </Grid>
+    </Border>
+</UserControl>

@@ -6,10 +6,20 @@
     <UseWindowsForms>true</UseWindowsForms>
     <Nullable>enable</Nullable>
     <ApplicationManifest>app.manifest</ApplicationManifest>
+    <ApplicationIcon>../../assets/icons/kankei.ico</ApplicationIcon>
     <ImplicitUsings>enable</ImplicitUsings>
+    <Version>0.1.0</Version>
+    <Product>Kankei（還景）</Product>
+    <Authors>dhq-boiler</Authors>
+    <Description>Windowsの作業環境を保存・復元するアプリ</Description>
+    <StartupObject>Kankei.Desktop.Program</StartupObject>
+    <EnableDefaultApplicationDefinition>false</EnableDefaultApplicationDefinition>
   </PropertyGroup>
   <ItemGroup>
+    <Resource Include="../../assets/icons/kankei.ico" Link="Assets/Icons/kankei.ico" />
+    <Resource Include="../../assets/icons/kankei-512.png" Link="Assets/Icons/kankei-512.png" />
     <PackageReference Include="FlaUI.UIA3" Version="5.0.0" />
+    <PackageReference Include="Velopack" Version="1.2.0" />
     <PackageReference Include="ModelContextProtocol" Version="2.2.0" />
     <FrameworkReference Include="Microsoft.AspNetCore.App" />
   </ItemGroup>

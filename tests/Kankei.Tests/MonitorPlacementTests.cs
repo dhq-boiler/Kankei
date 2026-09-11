@@ -4,6 +4,23 @@ namespace Kankei.Tests;
 
 public class MonitorPlacementTests
 {
+    [Theory] // DT-1: display state × destination availability
+    [InlineData(WindowDisplayState.Normal, true)]
+    [InlineData(WindowDisplayState.Minimized, true)]
+    [InlineData(WindowDisplayState.Maximized, true)]
+    [InlineData(WindowDisplayState.Normal, false)]
+    [InlineData(WindowDisplayState.Minimized, false)]
+    [InlineData(WindowDisplayState.Maximized, false)]
+    public void PreviewMatchesRestoredVisibleOrNormalPlacement(WindowDisplayState state, bool connected)
+    {
+        var saved = Saved() with { DisplayState = state, Monitor = Sub, NormalBounds = new(-1800, 100, 1000, 700) };
+        SavedMonitor[] monitors = connected ? [Main, Sub] : [Main];
+        var expected = state == WindowDisplayState.Maximized
+            ? (connected ? Sub : Main).WorkArea
+            : new WindowBounds(connected ? -1800 : 120, 100, 1000, 700);
+        Assert.Equal(expected, MonitorPlacement.PreviewBounds(saved, monitors));
+    }
+
     private static readonly SavedMonitor Main = new("main", new(0, 0, 3440, 1440), new(0, 0, 3440, 1392));
     private static readonly SavedMonitor Sub = new("sub", new(-1920, 0, 1920, 1080), new(-1920, 0, 1920, 1032));
     private static SavedWindow Saved() => new("chrome.exe", "Chrome", -1928, -8, 1936, 1048, WindowDisplayState.Maximized);

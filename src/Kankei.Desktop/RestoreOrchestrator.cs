@@ -9,6 +9,18 @@ public sealed class RestoreOrchestrator(WindowDiscovery discovery, LayoutStore s
     YouTubeResumeService? youtubeResume = null)
 {
     private readonly ConcurrentDictionary<string, RestoreJob> _jobs = new();
+    private readonly object _lifecycle = new();
+    private bool _stopping;
+
+    public void BeginShutdown()
+    {
+        lock (_lifecycle)
+        {
+            if (_jobs.Values.Any(x => x.Status == RestoreStatus.Running)) throw new InvalidOperationException("配置の復元が終わってから更新・終了してください。");
+            _stopping = true;
+        }
+    }
+    public void CancelShutdown() { lock (_lifecycle) _stopping = false; }
 
     public RestoreJob? GetJob(string id) => _jobs.GetValueOrDefault(id);
 
@@ -18,7 +30,11 @@ public sealed class RestoreOrchestrator(WindowDiscovery discovery, LayoutStore s
         if (layout is null) return null;
 
         var job = new RestoreJob("rst_" + Guid.NewGuid().ToString("N"), layout.Id);
-        _jobs[job.Id] = job;
+        lock (_lifecycle)
+        {
+            if (_stopping) throw new InvalidOperationException("更新・終了の準備中です。");
+            _jobs[job.Id] = job;
+        }
         _ = Task.Run(() => RestoreAsync(layout, job, showOverlay), CancellationToken.None);
         return job;
     }

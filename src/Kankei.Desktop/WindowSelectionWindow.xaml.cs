@@ -15,6 +15,8 @@ public partial class WindowSelectionWindow : Window
     private int _listRevision;
     private bool _restoring;
     private bool _saving;
+    public bool IsBusy => _saving || _restoring;
+    private void OpenAboutClick(object sender, RoutedEventArgs e) => ((App)System.Windows.Application.Current).ShowAbout();
 
     public WindowSelectionWindow(WindowDiscovery discovery, LayoutStore store, RestoreOrchestrator orchestrator)
     {
@@ -53,6 +55,7 @@ public partial class WindowSelectionWindow : Window
     private void RestoreSelectionChanged(object sender, SelectionChangedEventArgs e)
     {
         if (RestoreButton is not null) RestoreButton.IsEnabled = SavedLayouts.SelectedItem is Layout && !_restoring;
+        Preview?.SetLayout(SavedLayouts.SelectedItem as Layout);
     }
 
     private async void RefreshLayoutsClick(object sender, RoutedEventArgs e) => await RefreshLayoutsAsync();
@@ -93,13 +96,18 @@ public partial class WindowSelectionWindow : Window
         foreach (var window in _discovery.Capture())
         {
             var label = $"{(string.IsNullOrEmpty(window.Title) ? "（タイトルなし）" : window.Title)}  —  {Path.GetFileName(window.ExecutablePath)}";
-            var check = new CheckBox { Content = new TextBlock { Text = label, TextWrapping = TextWrapping.Wrap }, Tag = window,
+            var title = new TextBlock { Text = string.IsNullOrEmpty(window.Title) ? "（タイトルなし）" : window.Title, TextTrimming = TextTrimming.CharacterEllipsis };
+            var caption = new TextBlock { Text = Path.GetFileNameWithoutExtension(window.ExecutablePath), FontSize = 11,
+                Foreground = (System.Windows.Media.Brush)FindResource("MutedBrush"), Margin = new Thickness(0, 3, 0, 0) };
+            var content = new StackPanel();
+            content.Children.Add(title);
+            content.Children.Add(caption);
+            var check = new CheckBox { Content = content, Tag = window,
                 Background = System.Windows.Media.Brushes.Transparent, HorizontalContentAlignment = System.Windows.HorizontalAlignment.Stretch,
-                Margin = new Thickness(0, 6, 0, 10) };
-            var labelBlock = (TextBlock)check.Content;
-            labelBlock.Background = System.Windows.Media.Brushes.Transparent;
-            labelBlock.MouseLeftButtonDown += (_, e) => { check.IsChecked = check.IsChecked != true; e.Handled = true; };
-            check.SizeChanged += (_, _) => labelBlock.Width = Math.Max(0, check.ActualWidth - 24);
+                Margin = new Thickness(0, 10, 0, 10), ToolTip = label };
+            content.Background = System.Windows.Media.Brushes.Transparent;
+            content.MouseLeftButtonDown += (_, e) => { check.IsChecked = check.IsChecked != true; e.Handled = true; };
+            check.SizeChanged += (_, _) => content.Width = Math.Max(0, check.ActualWidth - 36);
             AutomationProperties.SetName(check, label);
             AutomationProperties.SetAutomationId(check, "Window_" + window.WindowHandle);
             check.Checked += SelectionChanged;
@@ -114,6 +122,7 @@ public partial class WindowSelectionWindow : Window
         var count = WindowList.Children.OfType<CheckBox>().Count(x => x.IsChecked == true);
         Status.Text = $"{count} 件選択 / {WindowList.Children.Count} 件";
         SaveButton.IsEnabled = count > 0 && !_saving;
+        Preview?.SetSelection(WindowList.Children.OfType<CheckBox>().Where(x => x.IsChecked == true).Select(x => (SavedWindow)x.Tag).ToArray());
     }
 
     private void RefreshClick(object sender, RoutedEventArgs e) => RefreshWindows();
