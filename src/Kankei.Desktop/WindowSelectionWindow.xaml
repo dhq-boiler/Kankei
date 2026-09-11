@@ -23,6 +23,11 @@
                     <Button Grid.Column="1" Content="更新" Click="RefreshLayoutsClick" Margin="10,0" />
                     <Button Grid.Column="2" x:Name="RestoreButton" AutomationProperties.AutomationId="RestoreSelected" Content="復元" Style="{StaticResource PrimaryButton}" Click="RestoreClick" IsEnabled="False" />
                 </Grid>
+                <DockPanel Margin="0,12,0,0" LastChildFill="False">
+                    <Button x:Name="DeleteLayoutButton" DockPanel.Dock="Right" Content="削除" AutomationProperties.AutomationId="DeleteLayout" Click="DeleteLayoutClick" IsEnabled="False" ToolTip="選択したプロファイルを削除" />
+                    <Button x:Name="CopyApiButton" Content="API URLをコピー" AutomationProperties.AutomationId="CopyRestoreApi" Click="CopyApiClick" IsEnabled="False" ToolTip="POSTで呼び出す復元APIのURLをコピーします。コピーだけでは復元しません。" />
+                    <Button x:Name="CopyCurlButton" Content="curlをコピー" AutomationProperties.AutomationId="CopyRestoreCurl" Click="CopyCurlClick" IsEnabled="False" Margin="8,0,0,0" ToolTip="PowerShellで実行できるcurl.exeのPOSTコマンドをコピーします。" />
+                </DockPanel>
                 <TextBlock x:Name="RestoreStatusText" AutomationProperties.AutomationId="RestoreStatus" Text="保存済みの配置を読み込み中…" Foreground="{StaticResource MutedBrush}" TextWrapping="Wrap" Margin="0,12,0,0" />
             </StackPanel>
         </Border>

@@ -1,7 +1,7 @@
 version: 3
 title: Kankei MVP
 createdAt: 2026-09-11T05:47:00.6493944Z
-modifiedAt: 2026-09-11T08:42:25.8838989Z
+modifiedAt: 2026-09-11T09:01:37.3037431Z
 tasks:
 - id: initial-vertical-slice
   title: 初期縦切り（保存・復元・オーバーレイ・ローカル API）
@@ -58,3 +58,18 @@ tasks:
   estimateHours: 2
   remainingHours: 0
   notes: 2026-09-11 VS2026ビルドと92テスト成功。JidoDebuggerで3画面の位置関係、defaultの2件の復元予定、チェックした1件の現在位置への切り替えを確認。現在のモニター領域を同比率で描画し、選択したプロファイルの復元予定位置を重ねる。最大化・最小化・切断時の配置を復元計算と共有し、選択対象の現在位置も確認可能にする。JidoDebuggerで表示を検証。
+- id: taskbar-icon-fix
+  title: タスクバーでデフォルトのままのアプリアイコンを修正
+  estimateHours: 1
+  remainingHours: 0
+  notes: 2026-09-11 インストール版0.1.1を再起動し、JidoDebugger UIAでタスクバーのvelopack.KankeiAppを特定、該当領域の画像で専用アイコンの正常表示を確認。開発EXE・インストール本体・起動用EXEの抽出アイコンとデスクトップショートカット参照先は正常。コード変更なし。報告されたデフォルト表示は再現できず、キャッシュ等の根因は未特定。
+- id: copy-restore-api
+  title: 選択した配置プロファイルのREST APIをクリップボードへコピー
+  estimateHours: 1
+  remainingHours: 0
+  notes: 復元欄にPOST用URLとPowerShell向けcurlコマンドのコピー操作を追加。未選択時は無効、日本語IDはURLエンコードし、コピー失敗を表示。コピーだけでは復元しない。JidoDebuggerで選択切替とクリップボードを検証。 2026-09-11 実装完了、VS2026ビルドと92テスト成功。日本語IDのコピーURL/curlをクリップボードと照合し、一時プロファイルへの実POSTが202 Acceptedになることを確認。
+- id: delete-layout-profile
+  title: 配置プロファイルの削除
+  estimateHours: 1
+  remainingHours: 0
+  notes: 選択プロファイルを名前付き確認ダイアログ経由で削除。キャンセル時は保持、保存・復元中と未選択は無効。削除後に一覧とプレビューを更新。JidoDebuggerで一時プロファイルを使って確認。 2026-09-11 キャンセル時のファイル保持、確定時の削除と一覧・プレビュー解除、未選択時の削除無効を実画面で確認。一時プロファイルは削除済み。

@@ -8,12 +8,14 @@ namespace Kankei.Desktop;
 
 public sealed class LocalApiHost(LayoutStore store, WindowDiscovery discovery, RestoreOrchestrator orchestrator, ApplicationAdapterRegistry adapters)
 {
+    public const string BaseUrl = "http://127.0.0.1:48120";
+    public static string RestoreUrl(string layoutId) => $"{BaseUrl}/v1/layouts/{Uri.EscapeDataString(layoutId)}/restore";
     private WebApplication? _application;
 
     public async Task StartAsync(CancellationToken cancellationToken = default)
     {
         var builder = WebApplication.CreateSlimBuilder();
-        builder.WebHost.UseUrls("http://127.0.0.1:48120");
+        builder.WebHost.UseUrls(BaseUrl);
         _application = builder.Build();
         _application.MapGet("/v1/health", () => Results.Ok(new { status = "ok", service = "Kankei" }));
         _application.MapGet("/v1/layouts", async (CancellationToken ct) => Results.Ok(await store.ListAsync(ct)));

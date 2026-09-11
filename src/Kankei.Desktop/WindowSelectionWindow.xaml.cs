@@ -15,7 +15,8 @@ public partial class WindowSelectionWindow : Window
     private int _listRevision;
     private bool _restoring;
     private bool _saving;
-    public bool IsBusy => _saving || _restoring;
+    private bool _deleting;
+    public bool IsBusy => _saving || _restoring || _deleting;
     private void OpenAboutClick(object sender, RoutedEventArgs e) => ((App)System.Windows.Application.Current).ShowAbout();
 
     public WindowSelectionWindow(WindowDiscovery discovery, LayoutStore store, RestoreOrchestrator orchestrator)
@@ -54,16 +55,63 @@ public partial class WindowSelectionWindow : Window
 
     private void RestoreSelectionChanged(object sender, SelectionChangedEventArgs e)
     {
-        if (RestoreButton is not null) RestoreButton.IsEnabled = SavedLayouts.SelectedItem is Layout && !_restoring;
+        UpdateProfileActions();
         Preview?.SetLayout(SavedLayouts.SelectedItem as Layout);
+    }
+
+    private void UpdateProfileActions()
+    {
+        var selected = SavedLayouts.SelectedItem is Layout;
+        if (RestoreButton is not null) RestoreButton.IsEnabled = selected && !IsBusy;
+        if (DeleteLayoutButton is not null) DeleteLayoutButton.IsEnabled = selected && !IsBusy;
+        if (CopyApiButton is not null) CopyApiButton.IsEnabled = selected;
+        if (CopyCurlButton is not null) CopyCurlButton.IsEnabled = selected;
+    }
+
+    private void CopyApiClick(object sender, RoutedEventArgs e) => CopyRestoreApi(false);
+    private void CopyCurlClick(object sender, RoutedEventArgs e) => CopyRestoreApi(true);
+
+    private void CopyRestoreApi(bool asCurl)
+    {
+        if (SavedLayouts.SelectedItem is not Layout selected) return;
+        var url = LocalApiHost.RestoreUrl(selected.Id);
+        try
+        {
+            System.Windows.Clipboard.SetText(asCurl ? $"curl.exe --request POST \"{url}\"" : url);
+            RestoreStatusText.Text = asCurl ? $"「{selected.Name}」のcurlコマンドをコピーしました。PowerShellで実行できます。"
+                : $"「{selected.Name}」のAPI URLをコピーしました。HTTP POSTで呼び出してください。";
+        }
+        catch (System.Runtime.InteropServices.ExternalException)
+        {
+            RestoreStatusText.Text = "クリップボードにコピーできませんでした。少し待ってから再度お試しください。";
+        }
+    }
+
+    private async void DeleteLayoutClick(object sender, RoutedEventArgs e)
+    {
+        if (IsBusy || SavedLayouts.SelectedItem is not Layout selected) return;
+        _deleting = true;
+        UpdateProfileActions();
+        try
+        {
+            if (System.Windows.MessageBox.Show(this,
+                $"配置プロファイル「{selected.Name}」を削除しますか？\nこの操作は取り消せません。現在開いているウィンドウは変更されません。",
+                "配置プロファイルの削除", MessageBoxButton.YesNo, MessageBoxImage.Warning, MessageBoxResult.No) != MessageBoxResult.Yes) return;
+            _store.Delete(selected.Id);
+            await RefreshLayoutsAsync();
+            RestoreStatusText.Text = $"「{selected.Name}」を削除しました。";
+        }
+        catch (Exception ex) { RestoreStatusText.Text = "削除できませんでした: " + ex.Message; }
+        finally { _deleting = false; UpdateProfileActions(); }
     }
 
     private async void RefreshLayoutsClick(object sender, RoutedEventArgs e) => await RefreshLayoutsAsync();
 
     private async void RestoreClick(object sender, RoutedEventArgs e)
     {
-        if (_restoring || SavedLayouts.SelectedItem is not Layout selected) return;
+        if (IsBusy || SavedLayouts.SelectedItem is not Layout selected) return;
         _restoring = true;
+        UpdateProfileActions();
         RestorePanel.IsEnabled = false;
         try
         {
@@ -85,7 +133,7 @@ public partial class WindowSelectionWindow : Window
         {
             _restoring = false;
             RestorePanel.IsEnabled = true;
-            RestoreButton.IsEnabled = SavedLayouts.SelectedItem is Layout;
+            UpdateProfileActions();
         }
     }
 
@@ -130,8 +178,9 @@ public partial class WindowSelectionWindow : Window
 
     private async void SaveClick(object sender, RoutedEventArgs e)
     {
-        if (_saving) return;
+        if (IsBusy) return;
         _saving = true;
+        UpdateProfileActions();
         SaveButton.IsEnabled = false;
         try
         {
@@ -147,6 +196,6 @@ public partial class WindowSelectionWindow : Window
             Status.Text = $"「{name}」に {windows.Count} 件の配置を保存しました。";
         }
         catch (Exception ex) { Status.Text = ex.Message; }
-        finally { _saving = false; SaveButton.IsEnabled = WindowList.Children.OfType<CheckBox>().Any(x => x.IsChecked == true); }
+        finally { _saving = false; UpdateProfileActions(); SaveButton.IsEnabled = WindowList.Children.OfType<CheckBox>().Any(x => x.IsChecked == true); }
     }
 }

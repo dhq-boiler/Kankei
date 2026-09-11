@@ -40,6 +40,11 @@ public sealed class LayoutStore
         return await JsonSerializer.DeserializeAsync<Layout>(stream, JsonOptions, cancellationToken);
     }
 
+    public void Delete(string id)
+    {
+        File.Delete(Path.Combine(_directory, ToId(id) + ".json"));
+    }
+
     private static string ToId(string value)
     {
         var slug = string.Concat(value.Trim().ToLowerInvariant().Select(c => char.IsLetterOrDigit(c) ? c : '-'));
