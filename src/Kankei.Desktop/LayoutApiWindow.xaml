@@ -1,0 +1,18 @@
+<Window x:Class="Kankei.Desktop.LayoutApiWindow"
+ xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" xmlns:i18n="clr-namespace:Kankei.Desktop"
+ Title="{i18n:Translate 'API連携'}" Width="650" SizeToContent="Height" ResizeMode="NoResize" WindowStartupLocation="CenterOwner" ShowInTaskbar="False"
+ Style="{StaticResource {x:Type Window}}" Icon="pack://application:,,,/Assets/Icons/kankei.ico">
+ <StackPanel Margin="28">
+  <TextBlock Text="{i18n:Translate 'API連携'}" FontSize="23" FontWeight="SemiBold"/>
+  <TextBlock x:Name="ProfileName" Foreground="{StaticResource MutedBrush}" TextWrapping="Wrap" Margin="0,8,0,24"/>
+  <TextBlock Text="HTTP POST" Foreground="{StaticResource MutedBrush}" Margin="0,0,0,8"/>
+  <TextBox x:Name="ApiUrl" IsReadOnly="True" TextWrapping="Wrap" AutomationProperties.AutomationId="RestoreApiUrl"/>
+  <Button Content="{i18n:Translate 'API URLをコピー'}" Click="CopyApiClick" AutomationProperties.AutomationId="CopyRestoreApi" HorizontalAlignment="Left" Margin="0,12,0,22"/>
+  <TextBlock Text="PowerShell / curl.exe" Foreground="{StaticResource MutedBrush}" Margin="0,0,0,8"/>
+  <TextBox x:Name="CurlCommand" IsReadOnly="True" TextWrapping="Wrap" AutomationProperties.AutomationId="RestoreCurlCommand"/>
+  <Button Content="{i18n:Translate 'curlをコピー'}" Click="CopyCurlClick" AutomationProperties.AutomationId="CopyRestoreCurl" HorizontalAlignment="Left" Margin="0,12,0,18"/>
+  <TextBlock Text="{i18n:Translate 'POSTで呼び出す復元APIのURLをコピーします。コピーだけでは復元しません。'}" Foreground="{StaticResource MutedBrush}" TextWrapping="Wrap"/>
+  <TextBlock x:Name="Status" AutomationProperties.AutomationId="ApiStatus" Foreground="{StaticResource MutedBrush}" TextWrapping="Wrap" Margin="0,14,0,0"/>
+  <Button Content="{i18n:Translate '閉じる'}" Click="CloseClick" AutomationProperties.AutomationId="CloseApi" HorizontalAlignment="Right" Margin="0,18,0,0"/>
+ </StackPanel>
+</Window>

@@ -3,10 +3,9 @@
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" xmlns:i18n="clr-namespace:Kankei.Desktop">
     <Border Style="{StaticResource Card}">
         <Grid>
-            <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition Height="*"/><RowDefinition Height="Auto"/><RowDefinition Height="180"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
+            <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition Height="*"/><RowDefinition Height="Auto"/><RowDefinition Height="110"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
             <DockPanel><TextBlock Text="{i18n:Translate '配置プレビュー'}" FontSize="19" FontWeight="SemiBold"/><TextBlock x:Name="MonitorCount" HorizontalAlignment="Right" Foreground="{StaticResource MutedBrush}" VerticalAlignment="Center"/></DockPanel>
             <StackPanel Grid.Row="1" Margin="0,16,0,0">
-                <StackPanel Orientation="Horizontal"><Button x:Name="PlannedButton" Content="{i18n:Translate '復元予定'}" Click="ShowPlanned" AutomationProperties.AutomationId="PreviewPlanned"/><Button x:Name="CurrentButton" Content="{i18n:Translate '保存対象'}" Click="ShowCurrent" Margin="8,0,0,0" AutomationProperties.AutomationId="PreviewCurrent"/></StackPanel>
                 <TextBlock x:Name="Summary" Foreground="{StaticResource MutedBrush}" TextWrapping="Wrap" Margin="0,12,0,0" AutomationProperties.AutomationId="PreviewSummary"/>
             </StackPanel>
             <Border Grid.Row="2" Background="#101925" BorderBrush="{StaticResource LineBrush}" BorderThickness="1" CornerRadius="12" Margin="0,18,0,14" ClipToBounds="True" MinHeight="190">

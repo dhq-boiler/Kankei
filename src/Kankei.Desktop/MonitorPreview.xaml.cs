@@ -30,10 +30,8 @@ public partial class MonitorPreview : UserControl
         Unloaded += (_, _) => Localization.Current.Changed -= Render;
     }
 
-    public void SetLayout(Layout? layout) { _layout = layout; Render(); }
-    public void SetSelection(IReadOnlyList<SavedWindow> windows) { _selected = windows; Render(); }
-    private void ShowPlanned(object sender, RoutedEventArgs e) { _planned = true; Render(); }
-    private void ShowCurrent(object sender, RoutedEventArgs e) { _planned = false; Render(); }
+    public void SetLayout(Layout? layout) { _planned = true; _layout = layout; Render(); }
+    public void SetSelection(IReadOnlyList<SavedWindow> windows) { _planned = false; _selected = windows; Render(); }
     private void MapSizeChanged(object sender, SizeChangedEventArgs e) => Render();
     private static SolidColorBrush Ink(string hex) => new((Color)ColorConverter.ConvertFromString(hex));
 
@@ -46,11 +44,9 @@ public partial class MonitorPreview : UserControl
         var screens = Screen.AllScreens;
         var monitors = screens.Select(MonitorPlacement.Capture).ToArray();
         MonitorCount.Text = L.F("{0} 台のモニター", monitors.Length);
-        PlannedButton.Background = (Brush)FindResource(_planned ? "AccentBrush" : "FieldBrush");
-        CurrentButton.Background = (Brush)FindResource(_planned ? "FieldBrush" : "AccentBrush");
         var windows = _planned ? _layout?.Windows ?? [] : _selected;
         Summary.Text = _planned
-            ? _layout is null ? L.T("左のプロファイルを選ぶと、復元予定の配置が表示されます。") : L.F("{0} · {1} 件の復元予定", _layout.Name, windows.Count)
+            ? _layout is null ? L.T("配置を選ぶと、復元予定の位置が表示されます。") : L.F("{0} · {1} 件の復元予定", _layout.Name, windows.Count)
             : L.F("チェックした {0} 件の現在位置（一覧更新時点）", windows.Count);
         if (monitors.Length == 0 || Map.ActualWidth <= 48 || Map.ActualHeight <= 64) return;
         var left = monitors.Min(m => m.Bounds.Left);

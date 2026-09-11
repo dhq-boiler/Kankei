@@ -102,5 +102,19 @@
   "バージョン {0} の更新準備ができています。終了時、または「今すぐ更新」で適用します。": "Version {0} is ready. It will be applied on exit, or choose “Update and restart”.",
   "バージョン {0} が公開されました。クリックして更新を確認できます。": "Version {0} is available. Click to view the update.",
   "還景 ── 「{0}」レイアウトを復元中": "Kankei — Restoring “{0}”",
-  "{0} / {1} 完了": "{0} / {1} complete"
+  "{0} / {1} 完了": "{0} / {1} complete",
+  "配置を選択": "Select a layout",
+  "＋ 新規配置": "+ New layout",
+  "配置の操作": "Layout actions",
+  "配置の操作 — 復元・保存し直し・API連携・削除": "Layout actions — Restore, save again, API integration, delete",
+  "新規配置から、最初の配置を保存してください。": "Choose New layout to save your first layout.",
+  "配置を保存": "Save layout",
+  "配置を選ぶと、復元予定の位置が表示されます。": "Select a layout to preview the window positions.",
+  "{0} 件のウィンドウ": "Windows: {0}",
+  "この配置を復元": "Restore this layout",
+  "現在のウィンドウで保存し直す…": "Save again with current windows…",
+  "API連携…": "API integration…",
+  "API連携": "API integration",
+  "配置を削除…": "Delete layout…",
+  "言語設定を保存できませんでした": "Could not save the language setting"
 }

@@ -1,8 +1,7 @@
+using System.IO;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Automation;
-using System.IO;
-using CheckBox = System.Windows.Controls.CheckBox;
 
 namespace Kankei.Desktop;
 
@@ -13,11 +12,11 @@ public partial class WindowSelectionWindow : Window
     private readonly RestoreOrchestrator _orchestrator;
     private readonly CancellationTokenSource _closed = new();
     private int _listRevision;
+    private SaveLayoutWindow? _saveDialog;
+    private bool _dialogOpen;
     private bool _restoring;
-    private bool _saving;
     private bool _deleting;
-    public bool IsBusy => _saving || _restoring || _deleting;
-    private void OpenAboutClick(object sender, RoutedEventArgs e) => ((App)System.Windows.Application.Current).ShowAbout();
+    public bool IsBusy => _saveDialog?.IsBusy == true || _restoring || _deleting;
 
     public WindowSelectionWindow(WindowDiscovery discovery, LayoutStore store, RestoreOrchestrator orchestrator)
     {
@@ -25,19 +24,14 @@ public partial class WindowSelectionWindow : Window
         _discovery = discovery;
         _store = store;
         _orchestrator = orchestrator;
-        RefreshWindows();
-        Loaded += (_, _) => LayoutName.Focus();
-        Activated += async (_, _) => await RefreshLayoutsAsync();
-        Localization.Current.Changed += LanguageChanged;
-        Closed += (_, _) => { _closed.Cancel(); Localization.Current.Changed -= LanguageChanged; };
+        Activated += async (_, _) =>
+        {
+            if (!_dialogOpen && !IsBusy) await RefreshLayoutsAsync();
+        };
+        Closing += (_, e) => e.Cancel = IsBusy;
+        Closed += (_, _) => _closed.Cancel();
     }
-
-    private void LanguageChanged()
-    {
-        SelectionChanged(this, new RoutedEventArgs());
-        if (!IsBusy) RestoreStatusText.Text = L.T("復元する配置を一覧から選んでください。");
-    }
-
+    private void OpenAboutClick(object sender, RoutedEventArgs e) => ((App)System.Windows.Application.Current).ShowAbout();
     private void LanguageClick(object sender, RoutedEventArgs e)
     {
         var menu = new System.Windows.Controls.ContextMenu
@@ -62,172 +56,115 @@ public partial class WindowSelectionWindow : Window
         menu.IsOpen = true;
     }
 
+
     private async Task RefreshLayoutsAsync(string? selectedId = null)
     {
         var revision = ++_listRevision;
+        selectedId ??= (SavedLayouts.SelectedItem as Layout)?.Id;
         try
         {
             var layouts = await _store.ListAsync(_closed.Token);
             if (revision != _listRevision || _closed.IsCancellationRequested) return;
-            selectedId ??= (SavedLayouts.SelectedItem as Layout)?.Id;
+            // Re-activation after the progress overlay must not erase the operation result.
+            if (SavedLayouts.ItemsSource is IReadOnlyList<Layout> current &&
+                current.Select(x => (x.Id, x.SavedAt)).SequenceEqual(layouts.Select(x => (x.Id, x.SavedAt))))
+            {
+                SavedLayouts.SelectedItem = layouts.FirstOrDefault(x => x.Id == selectedId) is Layout match
+                    ? current.First(x => x.Id == match.Id) : current.FirstOrDefault();
+                return;
+            }
             SavedLayouts.ItemsSource = layouts;
-            SavedLayouts.SelectedItem = layouts.FirstOrDefault(x => x.Id == selectedId);
-            if (!_restoring) RestoreStatusText.Text = layouts.Count == 0
-                ? L.T("保存済みの配置はありません。下の一覧から保存してください。") : L.T("復元する配置を一覧から選んでください。");
+            SavedLayouts.SelectedItem = layouts.FirstOrDefault(x => x.Id == selectedId) ?? layouts.FirstOrDefault();
+            Status.Text = layouts.Count == 0 ? L.T("新規配置から、最初の配置を保存してください。") : "";
         }
         catch (OperationCanceledException) when (_closed.IsCancellationRequested) { }
-        catch (Exception ex)
-        {
-            if (revision != _listRevision) return;
-            SavedLayouts.ItemsSource = null;
-            RestoreStatusText.Text = L.T("一覧を読み込めませんでした: ") + ex.Message;
-        }
+        catch (Exception ex) { if (revision == _listRevision) Status.Text = L.T("一覧を読み込めませんでした: ") + ex.Message; }
     }
-
     private void RestoreSelectionChanged(object sender, SelectionChangedEventArgs e)
     {
-        UpdateProfileActions();
         Preview?.SetLayout(SavedLayouts.SelectedItem as Layout);
+        if (LayoutActionsButton is not null) LayoutActionsButton.IsEnabled = SavedLayouts.SelectedItem is Layout;
+    }
+    private async void NewLayoutClick(object sender, RoutedEventArgs e) => await ShowSaveAsync();
+
+    private async Task ShowSaveAsync(string? name = null)
+    {
+        if (_dialogOpen || IsBusy) return;
+        _dialogOpen = true;
+        _saveDialog = new SaveLayoutWindow(_discovery, _store, name) { Owner = this };
+        string? savedId;
+        try { _saveDialog.ShowDialog(); savedId = _saveDialog.SavedLayout?.Id; }
+        finally { _saveDialog = null; _dialogOpen = false; }
+        await RefreshLayoutsAsync(savedId);
     }
 
-    private void UpdateProfileActions()
+    private void LayoutActionsClick(object sender, RoutedEventArgs e)
     {
-        var selected = SavedLayouts.SelectedItem is Layout;
-        if (RestoreButton is not null) RestoreButton.IsEnabled = selected && !IsBusy;
-        if (DeleteLayoutButton is not null) DeleteLayoutButton.IsEnabled = selected && !IsBusy;
-        if (CopyApiButton is not null) CopyApiButton.IsEnabled = selected;
-        if (CopyCurlButton is not null) CopyCurlButton.IsEnabled = selected;
-    }
-
-    private void CopyApiClick(object sender, RoutedEventArgs e) => CopyRestoreApi(false);
-    private void CopyCurlClick(object sender, RoutedEventArgs e) => CopyRestoreApi(true);
-
-    private void CopyRestoreApi(bool asCurl)
-    {
-        if (SavedLayouts.SelectedItem is not Layout selected) return;
-        var url = LocalApiHost.RestoreUrl(selected.Id);
-        try
+        if (_dialogOpen || IsBusy || SavedLayouts.SelectedItem is not Layout selected) return;
+        var menu = new System.Windows.Controls.ContextMenu
         {
-            System.Windows.Clipboard.SetText(asCurl ? $"curl.exe --request POST \"{url}\"" : url);
-            RestoreStatusText.Text = asCurl ? L.F("「{0}」のcurlコマンドをコピーしました。PowerShellで実行できます。", selected.Name)
-                : L.F("「{0}」のAPI URLをコピーしました。HTTP POSTで呼び出してください。", selected.Name);
-        }
-        catch (System.Runtime.InteropServices.ExternalException)
+            PlacementTarget = LayoutActionsButton,
+            Placement = System.Windows.Controls.Primitives.PlacementMode.Top,
+            Background = (System.Windows.Media.Brush)FindResource("SurfaceBrush"),
+            Foreground = (System.Windows.Media.Brush)FindResource("TextBrush")
+        };
+        void Add(string label, string id, RoutedEventHandler action)
         {
-            RestoreStatusText.Text = L.T("クリップボードにコピーできませんでした。少し待ってから再度お試しください。");
+            var item = new System.Windows.Controls.MenuItem { Header = L.T(label), Padding = new Thickness(12, 8, 18, 8) };
+            AutomationProperties.SetAutomationId(item, id);
+            item.Click += action;
+            menu.Items.Add(item);
         }
+        Add("この配置を復元", "RestoreSelected", async (_, _) => await RestoreAsync(selected));
+        Add("現在のウィンドウで保存し直す…", "SaveAgain", async (_, _) => await ShowSaveAsync(selected.Name));
+        Add("API連携…", "OpenLayoutApi", (_, _) =>
+        {
+            _dialogOpen = true;
+            try { new LayoutApiWindow(selected) { Owner = this }.ShowDialog(); }
+            finally { _dialogOpen = false; }
+        });
+        menu.Items.Add(new System.Windows.Controls.Separator());
+        Add("配置を削除…", "DeleteLayout", async (_, _) => await DeleteAsync(selected));
+        menu.IsOpen = true;
     }
 
-    private async void DeleteLayoutClick(object sender, RoutedEventArgs e)
+    private void SetOperationEnabled(bool enabled)
     {
-        if (IsBusy || SavedLayouts.SelectedItem is not Layout selected) return;
+        ProfileBar.IsEnabled = enabled;
+    }
+
+    private async Task DeleteAsync(Layout selected)
+    {
+        if (IsBusy) return;
         _deleting = true;
-        UpdateProfileActions();
+        SetOperationEnabled(false);
         try
         {
-            if (!ConfirmDialog.Show(this,
-                L.F("配置プロファイル「{0}」を削除しますか？\nこの操作は取り消せません。現在開いているウィンドウは変更されません。", selected.Name),
-                L.T("配置プロファイルの削除"))) return;
+            if (!ConfirmDialog.Show(this, L.F("配置プロファイル「{0}」を削除しますか？\nこの操作は取り消せません。現在開いているウィンドウは変更されません。", selected.Name), L.T("配置プロファイルの削除"))) return;
             _store.Delete(selected.Id);
             await RefreshLayoutsAsync();
-            RestoreStatusText.Text = L.F("「{0}」を削除しました。", selected.Name);
+            Status.Text = L.F("「{0}」を削除しました。", selected.Name);
         }
-        catch (Exception ex) { RestoreStatusText.Text = L.T("削除できませんでした: ") + ex.Message; }
-        finally { _deleting = false; UpdateProfileActions(); }
+        catch (Exception ex) { Status.Text = L.T("削除できませんでした: ") + ex.Message; }
+        finally { _deleting = false; SetOperationEnabled(true); }
     }
 
-    private async void RefreshLayoutsClick(object sender, RoutedEventArgs e) => await RefreshLayoutsAsync();
-
-    private async void RestoreClick(object sender, RoutedEventArgs e)
+    private async Task RestoreAsync(Layout selected)
     {
-        if (IsBusy || SavedLayouts.SelectedItem is not Layout selected) return;
+        if (IsBusy) return;
         _restoring = true;
-        UpdateProfileActions();
-        RestorePanel.IsEnabled = false;
+        SetOperationEnabled(false);
         try
         {
             var job = await _orchestrator.StartAsync(selected.Id, true, _closed.Token);
-            if (job is null)
-            {
-                await RefreshLayoutsAsync();
-                RestoreStatusText.Text = L.T("選択した配置は削除されています。一覧から選び直してください。");
-                return;
-            }
-            RestoreStatusText.Text = L.F("「{0}」を復元中…", selected.Name);
+            if (job is null) { await RefreshLayoutsAsync(); Status.Text = L.T("選択した配置は削除されています。一覧から選び直してください。"); return; }
+            Status.Text = L.F("「{0}」を復元中…", selected.Name);
             while (job.Status == RestoreStatus.Running) await Task.Delay(200, _closed.Token);
-            RestoreStatusText.Text = job.Status == RestoreStatus.Completed ? L.F("「{0}」を復元しました。", selected.Name)
+            Status.Text = job.Status == RestoreStatus.Completed ? L.F("「{0}」を復元しました。", selected.Name)
                 : L.F("「{0}」の復元で失敗がありました。", selected.Name) + string.Join(" / ", job.Items.Where(x => x.Status == RestoreItemStatus.Failed).Select(x => x.Detail));
         }
         catch (OperationCanceledException) when (_closed.IsCancellationRequested) { }
-        catch (Exception ex) { RestoreStatusText.Text = L.T("復元できませんでした: ") + ex.Message; }
-        finally
-        {
-            _restoring = false;
-            RestorePanel.IsEnabled = true;
-            UpdateProfileActions();
-        }
-    }
-
-    private void RefreshWindows()
-    {
-        if (_saving) return;
-        WindowList.Children.Clear();
-        foreach (var window in _discovery.Capture())
-        {
-            var label = $"{(string.IsNullOrEmpty(window.Title) ? L.T("（タイトルなし）") : window.Title)}  —  {Path.GetFileName(window.ExecutablePath)}";
-            var title = new TextBlock { Text = string.IsNullOrEmpty(window.Title) ? L.T("（タイトルなし）") : window.Title, TextTrimming = TextTrimming.CharacterEllipsis };
-            var caption = new TextBlock { Text = Path.GetFileNameWithoutExtension(window.ExecutablePath), FontSize = 11,
-                Foreground = (System.Windows.Media.Brush)FindResource("MutedBrush"), Margin = new Thickness(0, 3, 0, 0) };
-            var content = new StackPanel();
-            content.Children.Add(title);
-            content.Children.Add(caption);
-            var check = new CheckBox { Content = content, Tag = window,
-                Background = System.Windows.Media.Brushes.Transparent, HorizontalContentAlignment = System.Windows.HorizontalAlignment.Stretch,
-                Margin = new Thickness(0, 10, 0, 10), ToolTip = label };
-            content.Background = System.Windows.Media.Brushes.Transparent;
-            content.MouseLeftButtonDown += (_, e) => { check.IsChecked = check.IsChecked != true; e.Handled = true; };
-            check.SizeChanged += (_, _) => content.Width = Math.Max(0, check.ActualWidth - 36);
-            AutomationProperties.SetName(check, label);
-            AutomationProperties.SetAutomationId(check, "Window_" + window.WindowHandle);
-            check.Checked += SelectionChanged;
-            check.Unchecked += SelectionChanged;
-            WindowList.Children.Add(check);
-        }
-        SelectionChanged(this, new RoutedEventArgs());
-    }
-
-    private void SelectionChanged(object sender, RoutedEventArgs e)
-    {
-        var count = WindowList.Children.OfType<CheckBox>().Count(x => x.IsChecked == true);
-        Status.Text = L.F("{0} 件選択 / {1} 件", count, WindowList.Children.Count);
-        SaveButton.IsEnabled = count > 0 && !_saving;
-        Preview?.SetSelection(WindowList.Children.OfType<CheckBox>().Where(x => x.IsChecked == true).Select(x => (SavedWindow)x.Tag).ToArray());
-    }
-
-    private void RefreshClick(object sender, RoutedEventArgs e) => RefreshWindows();
-    private void CloseClick(object sender, RoutedEventArgs e) => Close();
-
-    private async void SaveClick(object sender, RoutedEventArgs e)
-    {
-        if (IsBusy) return;
-        _saving = true;
-        UpdateProfileActions();
-        SaveButton.IsEnabled = false;
-        try
-        {
-            var selected = WindowList.Children.OfType<CheckBox>().Where(x => x.IsChecked == true).Select(x => (SavedWindow)x.Tag).ToArray();
-            var name = LayoutName.Text;
-            var includeYouTube = IncludeYouTube.IsChecked == true;
-            if (await _store.GetAsync(name) is not null && !ConfirmDialog.Show(this,
-                    L.F("「{0}」の保存済み配置を上書きしますか？", name), L.T("配置の上書き"))) return;
-            var windows = WindowSelection.CaptureSelected(selected, _discovery.Capture());
-            windows = await ChromePageState.CaptureAsync(windows, _closed.Token);
-            if (includeYouTube) windows = await ChromeYouTubeState.CaptureAsync(windows, _closed.Token);
-            var layout = await _store.SaveAsync(name, windows);
-            await RefreshLayoutsAsync(layout.Id);
-            Status.Text = L.F("「{0}」に {1} 件の配置を保存しました。", name, windows.Count);
-        }
-        catch (Exception ex) { Status.Text = ex.Message; }
-        finally { _saving = false; UpdateProfileActions(); SaveButton.IsEnabled = WindowList.Children.OfType<CheckBox>().Any(x => x.IsChecked == true); }
+        catch (Exception ex) { Status.Text = L.T("復元できませんでした: ") + ex.Message; }
+        finally { _restoring = false; SetOperationEnabled(true); }
     }
 }
