@@ -38,8 +38,7 @@ public partial class WindowSelectionWindow : Window
         {
             PlacementTarget = (System.Windows.Controls.Button)sender,
             Placement = System.Windows.Controls.Primitives.PlacementMode.Bottom,
-            Background = (System.Windows.Media.Brush)FindResource("SurfaceBrush"),
-            Foreground = (System.Windows.Media.Brush)FindResource("TextBrush")
+            Style = (Style)FindResource("PopupMenu")
         };
         foreach (var (code, label) in new[] { ("ja", "日本語"), ("en", "English") })
         {
@@ -105,12 +104,11 @@ public partial class WindowSelectionWindow : Window
         {
             PlacementTarget = LayoutActionsButton,
             Placement = System.Windows.Controls.Primitives.PlacementMode.Top,
-            Background = (System.Windows.Media.Brush)FindResource("SurfaceBrush"),
-            Foreground = (System.Windows.Media.Brush)FindResource("TextBrush")
+            Style = (Style)FindResource("PopupMenu")
         };
         void Add(string label, string id, RoutedEventHandler action)
         {
-            var item = new System.Windows.Controls.MenuItem { Header = L.T(label), Padding = new Thickness(12, 8, 18, 8) };
+            var item = new System.Windows.Controls.MenuItem { Header = L.T(label) };
             AutomationProperties.SetAutomationId(item, id);
             item.Click += action;
             menu.Items.Add(item);
@@ -123,7 +121,7 @@ public partial class WindowSelectionWindow : Window
             try { new LayoutApiWindow(selected) { Owner = this }.ShowDialog(); }
             finally { _dialogOpen = false; }
         });
-        menu.Items.Add(new System.Windows.Controls.Separator());
+        menu.Items.Add(new System.Windows.Controls.Separator { Style = (Style)FindResource("PopupMenuSeparator") });
         Add("配置を削除…", "DeleteLayout", async (_, _) => await DeleteAsync(selected));
         menu.IsOpen = true;
     }

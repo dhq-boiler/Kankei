@@ -6,6 +6,60 @@
     <SolidColorBrush x:Key="TextBrush" Color="#EDF3FC" />
     <SolidColorBrush x:Key="MutedBrush" Color="#9BAFC9" />
     <SolidColorBrush x:Key="AccentBrush" Color="#347DEA" />
+    <!-- Flat popup menus share a complete template; OS icon gutters are not used. -->
+    <Style x:Key="PopupMenuItem" TargetType="MenuItem">
+        <Setter Property="Foreground" Value="{StaticResource TextBrush}"/>
+        <Setter Property="Background" Value="Transparent"/>
+        <Setter Property="Padding" Value="12,9"/>
+        <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="MenuItem">
+                    <Border x:Name="Row" Background="{TemplateBinding Background}" CornerRadius="6" Padding="{TemplateBinding Padding}" BorderThickness="1" BorderBrush="Transparent">
+                        <Grid>
+                            <Grid.ColumnDefinitions><ColumnDefinition Width="Auto"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
+                            <Grid x:Name="CheckSlot" Width="24" Visibility="Collapsed">
+                                <Path x:Name="CheckMark" Data="M 1,6 L 5,10 L 12,2" Stroke="#8DBBFF" StrokeThickness="2" StrokeStartLineCap="Round" StrokeEndLineCap="Round" Width="14" Height="14" VerticalAlignment="Center" HorizontalAlignment="Left" Visibility="Hidden"/>
+                            </Grid>
+                            <ContentPresenter Grid.Column="1" ContentSource="Header" RecognizesAccessKey="True" VerticalAlignment="Center" HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"/>
+                        </Grid>
+                    </Border>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsCheckable" Value="True"><Setter TargetName="CheckSlot" Property="Visibility" Value="Visible"/></Trigger>
+                        <Trigger Property="IsChecked" Value="True"><Setter TargetName="CheckMark" Property="Visibility" Value="Visible"/></Trigger>
+                        <Trigger Property="IsHighlighted" Value="True"><Setter TargetName="Row" Property="Background" Value="#2A3C56"/></Trigger>
+                        <Trigger Property="IsKeyboardFocused" Value="True"><Setter TargetName="Row" Property="BorderBrush" Value="#8DBBFF"/></Trigger>
+                        <Trigger Property="IsEnabled" Value="False"><Setter TargetName="Row" Property="Opacity" Value="0.4"/></Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+    <Style x:Key="PopupMenuSeparator" TargetType="Separator">
+        <Setter Property="Template"><Setter.Value><ControlTemplate TargetType="Separator"><Border Height="1" Background="{StaticResource LineBrush}" Margin="10,5"/></ControlTemplate></Setter.Value></Setter>
+    </Style>
+    <Style x:Key="PopupMenu" TargetType="ContextMenu">
+        <Setter Property="Foreground" Value="{StaticResource TextBrush}"/>
+        <Setter Property="Background" Value="{StaticResource SurfaceBrush}"/>
+        <Setter Property="FontFamily" Value="Yu Gothic UI"/>
+        <Setter Property="FontSize" Value="13"/>
+        <Setter Property="MinWidth" Value="150"/>
+        <Setter Property="HasDropShadow" Value="False"/>
+        <Setter Property="SnapsToDevicePixels" Value="True"/>
+        <Setter Property="UseLayoutRounding" Value="True"/>
+        <Setter Property="ItemContainerStyle" Value="{StaticResource PopupMenuItem}"/>
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="ContextMenu">
+                    <Border Background="{TemplateBinding Background}" BorderBrush="{StaticResource LineBrush}" BorderThickness="1" CornerRadius="9" Padding="5">
+                        <ScrollViewer CanContentScroll="True" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+                            <ItemsPresenter KeyboardNavigation.DirectionalNavigation="Cycle"/>
+                        </ScrollViewer>
+                    </Border>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
     <Style TargetType="Window">
         <Setter Property="FontFamily" Value="Yu Gothic UI" /><Setter Property="FontSize" Value="13" />
         <Setter Property="Foreground" Value="{StaticResource TextBrush}" /><Setter Property="Background" Value="{StaticResource PageBrush}" />
