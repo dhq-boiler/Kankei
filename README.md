@@ -12,7 +12,7 @@ Windows の作業環境を保存し、後から配置を復元するローカル
 
 ## 起動
 
-インストーラーは [GitHub Releases](https://github.com/dhq-boiler/Kankei/releases) の `Kankei-win-Setup.exe` を使用します（Windows x64、.NET 同梱）。
+インストーラーは [GitHub Releases](https://github.com/dhq-boiler/Kankei/releases) の `KankeiApp-win-Setup.exe` を使用します（Windows x64、.NET 同梱）。
 ソースから起動する場合は .NET 10 SDK が必要です。
 
 ```powershell
@@ -21,6 +21,9 @@ dotnet run --project src/Kankei.Desktop
 
 通知領域の Kankei アイコンを右クリックし、「保存済みの配置を復元」からプロファイル名を選んで復元できます。
 一覧は右クリックするたびに更新されます。「配置を選んで保存・復元…」の画面上部からも選択して復元できます。
+
+画面右側には現在のモニター構成と配置プレビューを表示します。プロファイルを選ぶと復元予定の位置を重ね、「保存対象」へ切り替えるとチェックしたウィンドウの現在位置（一覧更新時点）を確認できます。
+一覧の各ウィンドウにポインターを重ねると、その位置を強調します。最大化は復元先の作業領域、最小化は通常位置を破線で表示します。モニターが切断されている場合は、実際の復元と同じ移動先を表示します。
 
 ### バージョン情報とアップデート
 
@@ -41,7 +44,7 @@ dotnet run --project src/Kankei.Desktop
 ```
 
 `artifacts/releases/0.1.0` に Setup.exe、ポータブル ZIP、更新パッケージとフィードを作成します。
-初期構成のインストーラーはコード署名なしです。
+初期構成のインストーラーはコード署名なしです。本体は `%LOCALAPPDATA%\KankeiApp`、保存データは `%LOCALAPPDATA%\Kankei` に分離しています。
 
 GitHub Actions は main の push / PR でテストし、`vMAJOR.MINOR.PATCH` タグの push でテスト・パッケージ作成・GitHub Release 公開を実行します。
 タグがアプリとパッケージのバージョンになります。更新クライアントが参照する `releases.win.json` と `.nupkg` もインストーラーと同じ Release に配置します。
@@ -135,3 +138,4 @@ dotnet test Kankei.sln
 MCP のテストはデスクトップのウィンドウを動かしません。
 `MonitorRestoreIntegrationTests` は2画面環境で専用ウィンドウを作り、通常・最大化・最小化のモニター間復元を検証します。
 2画面未満ではこの3件をスキップします。既存アプリのウィンドウは動かしません。
+
