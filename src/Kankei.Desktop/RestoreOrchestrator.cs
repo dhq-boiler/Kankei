@@ -47,6 +47,7 @@ public sealed class RestoreOrchestrator(WindowDiscovery discovery, LayoutStore s
             using var resumeLease = youtubeResume is null ? null : await youtubeResume.BeginRestoreAsync();
             if (youtubeResume is not null) layout = await youtubeResume.PrepareAsync(layout);
             var restoredAdapters = new HashSet<string>();
+            var restoredWindows = new List<IntPtr>();
             for (var windowIndex = 0; windowIndex < layout.Windows.Count; windowIndex++)
             {
                 var saved = layout.Windows[windowIndex];
@@ -94,6 +95,7 @@ public sealed class RestoreOrchestrator(WindowDiscovery discovery, LayoutStore s
                     item = item with { Status = RestoreItemStatus.Completed, Detail = "配置を復元しました。" };
                     ReplaceItem(job, item);
                     AddEvent(job, "復元完了", saved.ExecutablePath);
+                    if (saved.DisplayState != WindowDisplayState.Minimized) restoredWindows.Add(handle);
                 }
                 catch (Exception ex)
                 {
@@ -103,6 +105,9 @@ public sealed class RestoreOrchestrator(WindowDiscovery discovery, LayoutStore s
                 }
                 overlay.Refresh(job);
             }
+            var foregroundRestored = System.Windows.Application.Current.Dispatcher.Invoke(
+                () => WindowForeground.Restore(restoredWindows));
+            if (!foregroundRestored) AddEvent(job, "配置は復元しましたが、Windows により前面への切り替えが許可されませんでした。");
             job.Status = job.Items.Any(x => x.Status == RestoreItemStatus.Failed)
                 ? RestoreStatus.CompletedWithFailures : RestoreStatus.Completed;
         }
@@ -139,7 +144,6 @@ public sealed class RestoreOrchestrator(WindowDiscovery discovery, LayoutStore s
             throw new System.ComponentModel.Win32Exception(Marshal.GetLastWin32Error());
         if (saved.DisplayState != WindowDisplayState.Normal)
             ShowWindow(handle, saved.DisplayState == WindowDisplayState.Maximized ? 3 : 2);
-        SetForegroundWindow(handle);
     }
 
     private static void ReplaceItem(RestoreJob job, RestoreItem replacement)
@@ -152,6 +156,5 @@ public sealed class RestoreOrchestrator(WindowDiscovery discovery, LayoutStore s
         job.Events.Add(new RestoreEvent(DateTimeOffset.UtcNow, message, executablePath));
 
     [DllImport("user32.dll")] private static extern bool ShowWindow(IntPtr handle, int command);
-    [DllImport("user32.dll")] private static extern bool SetForegroundWindow(IntPtr handle);
     [DllImport("user32.dll", SetLastError = true)] private static extern bool SetWindowPos(IntPtr handle, IntPtr insertAfter, int x, int y, int cx, int cy, uint flags);
 }
