@@ -16,6 +16,7 @@
     <EnableDefaultApplicationDefinition>false</EnableDefaultApplicationDefinition>
   </PropertyGroup>
   <ItemGroup>
+    <EmbeddedResource Include="Localization/en.json" />
     <Resource Include="../../assets/icons/kankei.ico" Link="Assets/Icons/kankei.ico" />
     <Resource Include="../../assets/icons/kankei-512.png" Link="Assets/Icons/kankei-512.png" />
     <PackageReference Include="FlaUI.UIA3" Version="5.0.0" />

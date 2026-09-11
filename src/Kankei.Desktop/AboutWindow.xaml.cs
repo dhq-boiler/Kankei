@@ -13,14 +13,16 @@ public partial class AboutWindow : Window
         InitializeComponent();
         _updates = updates;
         _apply = apply;
-        VersionText.Text = "バージョン " + AppInfo.Version;
+        VersionText.Text = L.F("バージョン {0}", AppInfo.Version);
         _updates.Changed += UpdateChanged;
-        Closed += (_, _) => { _closed = true; _updates.Changed -= UpdateChanged; };
+        Localization.Current.Changed += UpdateChanged;
+        Closed += (_, _) => { _closed = true; _updates.Changed -= UpdateChanged; Localization.Current.Changed -= UpdateChanged; };
         Refresh();
     }
     private void UpdateChanged() { if (!_closed) Dispatcher.BeginInvoke(Refresh); }
     private void Refresh()
     {
+        VersionText.Text = L.F("バージョン {0}", AppInfo.Version);
         UpdateStatus.Text = _updates.Status;
         AutomaticUpdates.IsChecked = _updates.AutomaticUpdates;
         var busy = _updates.State is AppUpdateState.Checking or AppUpdateState.Downloading or AppUpdateState.Applying;
@@ -33,7 +35,7 @@ public partial class AboutWindow : Window
     private void AutomaticUpdatesClick(object sender, RoutedEventArgs e)
     {
         try { _updates.SetAutomaticUpdates(AutomaticUpdates.IsChecked == true); }
-        catch (Exception ex) { System.Windows.MessageBox.Show(this, ex.Message, "更新設定を保存できませんでした"); Refresh(); }
+        catch (Exception ex) { System.Windows.MessageBox.Show(this, ex.Message, L.T("更新設定を保存できませんでした")); Refresh(); }
     }
     private void OpenReleasesClick(object sender, RoutedEventArgs e) => Process.Start(new ProcessStartInfo(AppInfo.Repository + "/releases") { UseShellExecute = true });
     private void CloseClick(object sender, RoutedEventArgs e) => Close();

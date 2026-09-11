@@ -28,7 +28,38 @@ public partial class WindowSelectionWindow : Window
         RefreshWindows();
         Loaded += (_, _) => LayoutName.Focus();
         Activated += async (_, _) => await RefreshLayoutsAsync();
-        Closed += (_, _) => _closed.Cancel();
+        Localization.Current.Changed += LanguageChanged;
+        Closed += (_, _) => { _closed.Cancel(); Localization.Current.Changed -= LanguageChanged; };
+    }
+
+    private void LanguageChanged()
+    {
+        SelectionChanged(this, new RoutedEventArgs());
+        if (!IsBusy) RestoreStatusText.Text = L.T("復元する配置を一覧から選んでください。");
+    }
+
+    private void LanguageClick(object sender, RoutedEventArgs e)
+    {
+        var menu = new System.Windows.Controls.ContextMenu
+        {
+            PlacementTarget = (System.Windows.Controls.Button)sender,
+            Placement = System.Windows.Controls.Primitives.PlacementMode.Bottom,
+            Background = (System.Windows.Media.Brush)FindResource("SurfaceBrush"),
+            Foreground = (System.Windows.Media.Brush)FindResource("TextBrush")
+        };
+        foreach (var (code, label) in new[] { ("ja", "日本語"), ("en", "English") })
+        {
+            var item = new System.Windows.Controls.MenuItem { Header = label, IsCheckable = true, IsChecked = Localization.Current.Language == code };
+            AutomationProperties.SetAutomationId(item, "Language_" + code);
+            item.Click += (_, _) =>
+            {
+                try { Localization.Current.SetLanguage(code); }
+                catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+                { System.Windows.MessageBox.Show(this, ex.Message, L.T("言語設定を保存できませんでした")); }
+            };
+            menu.Items.Add(item);
+        }
+        menu.IsOpen = true;
     }
 
     private async Task RefreshLayoutsAsync(string? selectedId = null)
@@ -42,14 +73,14 @@ public partial class WindowSelectionWindow : Window
             SavedLayouts.ItemsSource = layouts;
             SavedLayouts.SelectedItem = layouts.FirstOrDefault(x => x.Id == selectedId);
             if (!_restoring) RestoreStatusText.Text = layouts.Count == 0
-                ? "保存済みの配置はありません。下の一覧から保存してください。" : "復元する配置を一覧から選んでください。";
+                ? L.T("保存済みの配置はありません。下の一覧から保存してください。") : L.T("復元する配置を一覧から選んでください。");
         }
         catch (OperationCanceledException) when (_closed.IsCancellationRequested) { }
         catch (Exception ex)
         {
             if (revision != _listRevision) return;
             SavedLayouts.ItemsSource = null;
-            RestoreStatusText.Text = "一覧を読み込めませんでした: " + ex.Message;
+            RestoreStatusText.Text = L.T("一覧を読み込めませんでした: ") + ex.Message;
         }
     }
 
@@ -78,12 +109,12 @@ public partial class WindowSelectionWindow : Window
         try
         {
             System.Windows.Clipboard.SetText(asCurl ? $"curl.exe --request POST \"{url}\"" : url);
-            RestoreStatusText.Text = asCurl ? $"「{selected.Name}」のcurlコマンドをコピーしました。PowerShellで実行できます。"
-                : $"「{selected.Name}」のAPI URLをコピーしました。HTTP POSTで呼び出してください。";
+            RestoreStatusText.Text = asCurl ? L.F("「{0}」のcurlコマンドをコピーしました。PowerShellで実行できます。", selected.Name)
+                : L.F("「{0}」のAPI URLをコピーしました。HTTP POSTで呼び出してください。", selected.Name);
         }
         catch (System.Runtime.InteropServices.ExternalException)
         {
-            RestoreStatusText.Text = "クリップボードにコピーできませんでした。少し待ってから再度お試しください。";
+            RestoreStatusText.Text = L.T("クリップボードにコピーできませんでした。少し待ってから再度お試しください。");
         }
     }
 
@@ -94,14 +125,14 @@ public partial class WindowSelectionWindow : Window
         UpdateProfileActions();
         try
         {
-            if (System.Windows.MessageBox.Show(this,
-                $"配置プロファイル「{selected.Name}」を削除しますか？\nこの操作は取り消せません。現在開いているウィンドウは変更されません。",
-                "配置プロファイルの削除", MessageBoxButton.YesNo, MessageBoxImage.Warning, MessageBoxResult.No) != MessageBoxResult.Yes) return;
+            if (!ConfirmDialog.Show(this,
+                L.F("配置プロファイル「{0}」を削除しますか？\nこの操作は取り消せません。現在開いているウィンドウは変更されません。", selected.Name),
+                L.T("配置プロファイルの削除"))) return;
             _store.Delete(selected.Id);
             await RefreshLayoutsAsync();
-            RestoreStatusText.Text = $"「{selected.Name}」を削除しました。";
+            RestoreStatusText.Text = L.F("「{0}」を削除しました。", selected.Name);
         }
-        catch (Exception ex) { RestoreStatusText.Text = "削除できませんでした: " + ex.Message; }
+        catch (Exception ex) { RestoreStatusText.Text = L.T("削除できませんでした: ") + ex.Message; }
         finally { _deleting = false; UpdateProfileActions(); }
     }
 
@@ -119,16 +150,16 @@ public partial class WindowSelectionWindow : Window
             if (job is null)
             {
                 await RefreshLayoutsAsync();
-                RestoreStatusText.Text = "選択した配置は削除されています。一覧から選び直してください。";
+                RestoreStatusText.Text = L.T("選択した配置は削除されています。一覧から選び直してください。");
                 return;
             }
-            RestoreStatusText.Text = $"「{selected.Name}」を復元中…";
+            RestoreStatusText.Text = L.F("「{0}」を復元中…", selected.Name);
             while (job.Status == RestoreStatus.Running) await Task.Delay(200, _closed.Token);
-            RestoreStatusText.Text = job.Status == RestoreStatus.Completed ? $"「{selected.Name}」を復元しました。"
-                : $"「{selected.Name}」の復元で失敗がありました。" + string.Join(" / ", job.Items.Where(x => x.Status == RestoreItemStatus.Failed).Select(x => x.Detail));
+            RestoreStatusText.Text = job.Status == RestoreStatus.Completed ? L.F("「{0}」を復元しました。", selected.Name)
+                : L.F("「{0}」の復元で失敗がありました。", selected.Name) + string.Join(" / ", job.Items.Where(x => x.Status == RestoreItemStatus.Failed).Select(x => x.Detail));
         }
         catch (OperationCanceledException) when (_closed.IsCancellationRequested) { }
-        catch (Exception ex) { RestoreStatusText.Text = "復元できませんでした: " + ex.Message; }
+        catch (Exception ex) { RestoreStatusText.Text = L.T("復元できませんでした: ") + ex.Message; }
         finally
         {
             _restoring = false;
@@ -143,8 +174,8 @@ public partial class WindowSelectionWindow : Window
         WindowList.Children.Clear();
         foreach (var window in _discovery.Capture())
         {
-            var label = $"{(string.IsNullOrEmpty(window.Title) ? "（タイトルなし）" : window.Title)}  —  {Path.GetFileName(window.ExecutablePath)}";
-            var title = new TextBlock { Text = string.IsNullOrEmpty(window.Title) ? "（タイトルなし）" : window.Title, TextTrimming = TextTrimming.CharacterEllipsis };
+            var label = $"{(string.IsNullOrEmpty(window.Title) ? L.T("（タイトルなし）") : window.Title)}  —  {Path.GetFileName(window.ExecutablePath)}";
+            var title = new TextBlock { Text = string.IsNullOrEmpty(window.Title) ? L.T("（タイトルなし）") : window.Title, TextTrimming = TextTrimming.CharacterEllipsis };
             var caption = new TextBlock { Text = Path.GetFileNameWithoutExtension(window.ExecutablePath), FontSize = 11,
                 Foreground = (System.Windows.Media.Brush)FindResource("MutedBrush"), Margin = new Thickness(0, 3, 0, 0) };
             var content = new StackPanel();
@@ -168,7 +199,7 @@ public partial class WindowSelectionWindow : Window
     private void SelectionChanged(object sender, RoutedEventArgs e)
     {
         var count = WindowList.Children.OfType<CheckBox>().Count(x => x.IsChecked == true);
-        Status.Text = $"{count} 件選択 / {WindowList.Children.Count} 件";
+        Status.Text = L.F("{0} 件選択 / {1} 件", count, WindowList.Children.Count);
         SaveButton.IsEnabled = count > 0 && !_saving;
         Preview?.SetSelection(WindowList.Children.OfType<CheckBox>().Where(x => x.IsChecked == true).Select(x => (SavedWindow)x.Tag).ToArray());
     }
@@ -187,14 +218,14 @@ public partial class WindowSelectionWindow : Window
             var selected = WindowList.Children.OfType<CheckBox>().Where(x => x.IsChecked == true).Select(x => (SavedWindow)x.Tag).ToArray();
             var name = LayoutName.Text;
             var includeYouTube = IncludeYouTube.IsChecked == true;
-            if (await _store.GetAsync(name) is not null && System.Windows.MessageBox.Show(this,
-                    $"「{name}」の保存済み配置を上書きしますか？", "配置の上書き", MessageBoxButton.YesNo) != MessageBoxResult.Yes) return;
+            if (await _store.GetAsync(name) is not null && !ConfirmDialog.Show(this,
+                    L.F("「{0}」の保存済み配置を上書きしますか？", name), L.T("配置の上書き"))) return;
             var windows = WindowSelection.CaptureSelected(selected, _discovery.Capture());
             windows = await ChromePageState.CaptureAsync(windows, _closed.Token);
             if (includeYouTube) windows = await ChromeYouTubeState.CaptureAsync(windows, _closed.Token);
             var layout = await _store.SaveAsync(name, windows);
             await RefreshLayoutsAsync(layout.Id);
-            Status.Text = $"「{name}」に {windows.Count} 件の配置を保存しました。";
+            Status.Text = L.F("「{0}」に {1} 件の配置を保存しました。", name, windows.Count);
         }
         catch (Exception ex) { Status.Text = ex.Message; }
         finally { _saving = false; UpdateProfileActions(); SaveButton.IsEnabled = WindowList.Children.OfType<CheckBox>().Any(x => x.IsChecked == true); }

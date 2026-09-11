@@ -36,9 +36,9 @@ public sealed class VelopackUpdateBackend : IUpdateBackend
         return update?.TargetFullRelease.Version.ToString();
     }
     public Task DownloadAsync(Action<int> progress, CancellationToken cancellationToken) =>
-        _manager.DownloadUpdatesAsync(_update ?? throw new InvalidOperationException("先に更新を確認してください。"), progress, cancellationToken);
+        _manager.DownloadUpdatesAsync(_update ?? throw new InvalidOperationException(L.T("先に更新を確認してください。")), progress, cancellationToken);
     public void ScheduleApply(bool restart) => _manager.WaitExitThenApplyUpdates(_manager.UpdatePendingRestart
-        ?? throw new InvalidOperationException("更新のダウンロードが完了していません。"), silent: true, restart: restart);
+        ?? throw new InvalidOperationException(L.T("更新のダウンロードが完了していません。")), silent: true, restart: restart);
 }
 
 public enum AppUpdateState { NotInstalled, Idle, Checking, Available, Downloading, Ready, Applying, Error }
@@ -50,7 +50,8 @@ public sealed class UpdateService
     private readonly string _settingsPath;
     private string? _notifiedVersion;
     public AppUpdateState State { get; private set; }
-    public string Status { get; private set; } = "更新を確認できます。";
+    private Func<string> _status = () => L.T("更新を確認できます。");
+    public string Status => _status();
     public string? AvailableVersion { get; private set; }
     public bool AutomaticUpdates { get; private set; } = true;
     public event Action? Changed;
@@ -64,7 +65,7 @@ public sealed class UpdateService
         catch (Exception ex) when (ex is IOException or JsonException) { System.Diagnostics.Trace.WriteLine(ex.Message); }
         AvailableVersion = backend.IsInstalled ? backend.PendingVersion : null;
         Set(!backend.IsInstalled ? AppUpdateState.NotInstalled : AvailableVersion is null ? AppUpdateState.Idle : AppUpdateState.Ready,
-            !backend.IsInstalled ? "開発版です。インストーラーから導入すると自動更新を利用できます。" : AvailableVersion is null ? "更新を確認できます。" : $"バージョン {AvailableVersion} の更新準備ができています。");
+            () => !backend.IsInstalled ? L.T("開発版です。インストーラーから導入すると自動更新を利用できます。") : AvailableVersion is null ? L.T("更新を確認できます。") : L.F("バージョン {0} の更新準備ができています。", AvailableVersion));
     }
 
     public void SetAutomaticUpdates(bool enabled)
@@ -83,24 +84,24 @@ public sealed class UpdateService
         try
         {
             if (State is AppUpdateState.Ready or AppUpdateState.Applying) return;
-            Set(AppUpdateState.Checking, "新しいバージョンを確認中…");
+            Set(AppUpdateState.Checking, () => L.T("新しいバージョンを確認中…"));
             AvailableVersion = await _backend.CheckAsync(cancellationToken);
-            if (AvailableVersion is null) { Set(AppUpdateState.Idle, "最新バージョンを使用しています。"); return; }
-            Set(AppUpdateState.Available, $"バージョン {AvailableVersion} が公開されています。");
+            if (AvailableVersion is null) { Set(AppUpdateState.Idle, () => L.T("最新バージョンを使用しています。")); return; }
+            Set(AppUpdateState.Available, () => L.F("バージョン {0} が公開されています。", AvailableVersion));
             if (_notifiedVersion != AvailableVersion) { _notifiedVersion = AvailableVersion; UpdateFound?.Invoke(AvailableVersion); }
             if (AutomaticUpdates) await DownloadAsync(cancellationToken);
         }
-        catch (OperationCanceledException) { Set(AppUpdateState.Idle, "更新の確認・ダウンロードを中止しました。"); }
-        catch (Exception ex) { Set(AppUpdateState.Error, "更新を確認・取得できませんでした: " + ex.Message); }
+        catch (OperationCanceledException) { Set(AppUpdateState.Idle, () => L.T("更新の確認・ダウンロードを中止しました。")); }
+        catch (Exception ex) { Set(AppUpdateState.Error, () => L.T("更新を確認・取得できませんでした: ") + ex.Message); }
         finally { _gate.Release(); }
     }
 
     private async Task DownloadAsync(CancellationToken cancellationToken)
     {
-        Set(AppUpdateState.Downloading, "更新をダウンロード中…");
-        await _backend.DownloadAsync(percent => Set(AppUpdateState.Downloading, $"更新をダウンロード中… {percent}%"), cancellationToken);
-        if (_backend.PendingVersion is null) throw new InvalidOperationException("更新ファイルを検証できませんでした。");
-        Set(AppUpdateState.Ready, $"バージョン {AvailableVersion} の更新準備ができています。終了時、または「今すぐ更新」で適用します。");
+        Set(AppUpdateState.Downloading, () => L.T("更新をダウンロード中…"));
+        await _backend.DownloadAsync(percent => Set(AppUpdateState.Downloading, () => L.F("更新をダウンロード中… {0}%", percent)), cancellationToken);
+        if (_backend.PendingVersion is null) throw new InvalidOperationException(L.T("更新ファイルを検証できませんでした。"));
+        Set(AppUpdateState.Ready, () => L.F("バージョン {0} の更新準備ができています。終了時、または「今すぐ更新」で適用します。", AvailableVersion));
     }
 
     public async Task<bool> ApplyNowAsync(Func<Task> prepareForExit, CancellationToken cancellationToken = default)
@@ -111,15 +112,15 @@ public sealed class UpdateService
             if (_backend.PendingVersion is null)
             {
                 AvailableVersion = await _backend.CheckAsync(cancellationToken);
-                if (AvailableVersion is null) { Set(AppUpdateState.Idle, "最新バージョンを使用しています。"); return false; }
+                if (AvailableVersion is null) { Set(AppUpdateState.Idle, () => L.T("最新バージョンを使用しています。")); return false; }
                 await DownloadAsync(cancellationToken);
             }
-            Set(AppUpdateState.Applying, "再生状態を保存して更新の準備中…");
+            Set(AppUpdateState.Applying, () => L.T("再生状態を保存して更新の準備中…"));
             await prepareForExit();
             _backend.ScheduleApply(restart: true);
             return true;
         }
-        catch (Exception ex) { Set(AppUpdateState.Error, "更新を適用できませんでした: " + ex.Message); return false; }
+        catch (Exception ex) { Set(AppUpdateState.Error, () => L.T("更新を適用できませんでした: ") + ex.Message); return false; }
         finally { _gate.Release(); }
     }
 
@@ -140,6 +141,6 @@ public sealed class UpdateService
         catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested) { }
     }
 
-    private void Set(AppUpdateState state, string message) { State = state; Status = message; Changed?.Invoke(); }
+    private void Set(AppUpdateState state, Func<string> message) { State = state; _status = message; Changed?.Invoke(); }
     private sealed record UpdateSettings(bool AutomaticUpdates);
 }

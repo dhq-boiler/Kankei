@@ -20,6 +20,7 @@ public partial class App : System.Windows.Application
     protected override async void OnStartup(StartupEventArgs e)
     {
         base.OnStartup(e);
+        Localization.Current.Load();
         EventManager.RegisterClassHandler(typeof(Window), FrameworkElement.LoadedEvent, new RoutedEventHandler((sender, _) =>
         {
             var enabled = 1;
@@ -40,7 +41,7 @@ public partial class App : System.Windows.Application
         ShowSelection(discovery, store, orchestrator);
         _ = Task.Run(() => _youtubeResume.RunAsync(_shutdown.Token));
         _updates.UpdateFound += version => Dispatcher.BeginInvoke(() =>
-            _trayIcon?.ShowBalloonTip(8000, "Kankei の更新", $"バージョン {version} が公開されました。クリックして更新を確認できます。", Forms.ToolTipIcon.Info));
+            _trayIcon?.ShowBalloonTip(8000, L.T("Kankei の更新"), L.F("バージョン {0} が公開されました。クリックして更新を確認できます。", version), Forms.ToolTipIcon.Info));
         _trayIcon!.BalloonTipClicked += (_, _) => ShowAbout();
         _ = Task.Run(() => _updates.RunAsync(_shutdown.Token));
     }
@@ -48,9 +49,9 @@ public partial class App : System.Windows.Application
     private void CreateTrayIcon(LayoutStore store, WindowDiscovery discovery, RestoreOrchestrator orchestrator, ApplicationAdapterRegistry adapters)
     {
         var menu = new Forms.ContextMenuStrip();
-        menu.Items.Add("配置を選んで保存・復元…", null, (_, _) => ShowSelection(discovery, store, orchestrator));
-        menu.Items.Add("バージョン情報・アップデート…", null, (_, _) => ShowAbout());
-        menu.Items.Add("現在の配置を「default」として保存", null, async (_, _) =>
+        menu.Items.Add(L.T("配置を選んで保存・復元…"), null, (_, _) => ShowSelection(discovery, store, orchestrator));
+        menu.Items.Add(L.T("バージョン情報・アップデート…"), null, (_, _) => ShowAbout());
+        menu.Items.Add(L.T("現在の配置を「default」として保存"), null, async (_, _) =>
         {
             try
             {
@@ -61,14 +62,19 @@ public partial class App : System.Windows.Application
             }
             catch (Exception ex) { Forms.MessageBox.Show(ex.Message, "Kankei"); }
         });
-        var restoreMenu = new Forms.ToolStripMenuItem("保存済みの配置を復元");
+        var restoreMenu = new Forms.ToolStripMenuItem(L.T("保存済みの配置を復元"));
         menu.Items.Add(restoreMenu);
         var menuRevision = 0;
         menu.Opening += async (_, _) =>
         {
+            menu.Items[0].Text = L.T("配置を選んで保存・復元…");
+            menu.Items[1].Text = L.T("バージョン情報・アップデート…");
+            menu.Items[2].Text = L.T("現在の配置を「default」として保存");
+            restoreMenu.Text = L.T("保存済みの配置を復元");
+            menu.Items[5].Text = L.T("終了");
             var revision = ++menuRevision;
             restoreMenu.DropDownItems.Clear();
-            restoreMenu.DropDownItems.Add(new Forms.ToolStripMenuItem("読み込み中…") { Enabled = false });
+            restoreMenu.DropDownItems.Add(new Forms.ToolStripMenuItem(L.T("読み込み中…")) { Enabled = false });
             try
             {
                 var layouts = await store.ListAsync(_shutdown.Token);
@@ -82,25 +88,25 @@ public partial class App : System.Windows.Application
                         try
                         {
                             var job = await orchestrator.StartAsync(layout.Id, true, _shutdown.Token);
-                            if (job is null) Forms.MessageBox.Show("配置が削除されています。メニューを開き直してください。", "Kankei");
+                            if (job is null) Forms.MessageBox.Show(L.T("配置が削除されています。メニューを開き直してください。"), "Kankei");
                         }
                         catch (OperationCanceledException) when (_shutdown.IsCancellationRequested) { }
                         catch (Exception ex) { Forms.MessageBox.Show(ex.Message, "Kankei"); }
                     };
                     restoreMenu.DropDownItems.Add(entry);
                 }
-                if (layouts.Count == 0) restoreMenu.DropDownItems.Add(new Forms.ToolStripMenuItem("保存済みの配置はありません") { Enabled = false });
+                if (layouts.Count == 0) restoreMenu.DropDownItems.Add(new Forms.ToolStripMenuItem(L.T("保存済みの配置はありません")) { Enabled = false });
             }
             catch (OperationCanceledException) when (_shutdown.IsCancellationRequested) { }
             catch (Exception)
             {
                 if (revision != menuRevision || menu.IsDisposed) return;
                 restoreMenu.DropDownItems.Clear();
-                restoreMenu.DropDownItems.Add(new Forms.ToolStripMenuItem("一覧を読み込めませんでした") { Enabled = false });
+                restoreMenu.DropDownItems.Add(new Forms.ToolStripMenuItem(L.T("一覧を読み込めませんでした")) { Enabled = false });
             }
         };
         menu.Items.Add(new Forms.ToolStripSeparator());
-        menu.Items.Add("終了", null, async (_, _) =>
+        menu.Items.Add(L.T("終了"), null, async (_, _) =>
         {
             await ExitAsync();
         });
@@ -144,7 +150,7 @@ public partial class App : System.Windows.Application
 
     private async Task PrepareForExitAsync()
     {
-        if (_selection?.IsBusy == true) throw new InvalidOperationException("配置の保存・復元が終わってから更新・終了してください。");
+        if (_selection?.IsBusy == true) throw new InvalidOperationException(L.T("配置の保存・復元が終わってから更新・終了してください。"));
         _orchestrator?.BeginShutdown();
         if (_youtubeResume is not null)
         {

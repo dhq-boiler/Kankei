@@ -23,7 +23,12 @@ public partial class MonitorPreview : UserControl
     private readonly List<FrameworkElement> _shapes = [];
     private static readonly string[] Palette = ["#639BFF", "#51D4C4", "#C297FF", "#F4B86A", "#F28CA9", "#A4CC71"];
 
-    public MonitorPreview() => InitializeComponent();
+    public MonitorPreview()
+    {
+        InitializeComponent();
+        Loaded += (_, _) => { Localization.Current.Changed += Render; Render(); };
+        Unloaded += (_, _) => Localization.Current.Changed -= Render;
+    }
 
     public void SetLayout(Layout? layout) { _layout = layout; Render(); }
     public void SetSelection(IReadOnlyList<SavedWindow> windows) { _selected = windows; Render(); }
@@ -40,13 +45,13 @@ public partial class MonitorPreview : UserControl
         _shapes.Clear();
         var screens = Screen.AllScreens;
         var monitors = screens.Select(MonitorPlacement.Capture).ToArray();
-        MonitorCount.Text = $"{monitors.Length} 台のモニター";
+        MonitorCount.Text = L.F("{0} 台のモニター", monitors.Length);
         PlannedButton.Background = (Brush)FindResource(_planned ? "AccentBrush" : "FieldBrush");
         CurrentButton.Background = (Brush)FindResource(_planned ? "FieldBrush" : "AccentBrush");
         var windows = _planned ? _layout?.Windows ?? [] : _selected;
         Summary.Text = _planned
-            ? _layout is null ? "左のプロファイルを選ぶと、復元予定の配置が表示されます。" : $"{_layout.Name} · {windows.Count} 件の復元予定"
-            : $"チェックした {windows.Count} 件の現在位置（一覧更新時点）";
+            ? _layout is null ? L.T("左のプロファイルを選ぶと、復元予定の配置が表示されます。") : L.F("{0} · {1} 件の復元予定", _layout.Name, windows.Count)
+            : L.F("チェックした {0} 件の現在位置（一覧更新時点）", windows.Count);
         if (monitors.Length == 0 || Map.ActualWidth <= 48 || Map.ActualHeight <= 64) return;
         var left = monitors.Min(m => m.Bounds.Left);
         var top = monitors.Min(m => m.Bounds.Top);
@@ -67,7 +72,7 @@ public partial class MonitorPreview : UserControl
         {
             var monitor = monitors[i];
             var name = monitor.DeviceName.Replace(@"\\.\", "");
-            var label = $"{name}{(screens[i].Primary ? " · メイン" : "")}\n{monitor.Bounds.Width} × {monitor.Bounds.Height}";
+            var label = $"{name}{(screens[i].Primary ? L.T(" · メイン") : "")}\n{monitor.Bounds.Width} × {monitor.Bounds.Height}";
             var frame = new Border { Background = Ink("#202E42"), BorderBrush = Ink("#607797"), BorderThickness = new Thickness(1.5), CornerRadius = new CornerRadius(5), ToolTip = label,
                 Child = new TextBlock { Text = label, Foreground = Ink("#9AAFCB"), FontSize = 11, TextAlignment = TextAlignment.Center, HorizontalAlignment = System.Windows.HorizontalAlignment.Center, VerticalAlignment = VerticalAlignment.Center } };
             AutomationProperties.SetName(frame, label);
@@ -81,10 +86,10 @@ public partial class MonitorPreview : UserControl
             var bounds = _planned ? MonitorPlacement.PreviewBounds(saved, monitors)
                 : saved.DisplayState == WindowDisplayState.Minimized ? saved.NormalBounds ?? new(saved.Left, saved.Top, saved.Width, saved.Height)
                 : new WindowBounds(saved.Left, saved.Top, saved.Width, saved.Height);
-            var state = saved.DisplayState switch { WindowDisplayState.Maximized => "最大化", WindowDisplayState.Minimized => "最小化・通常位置", _ => "通常" };
+            var state = saved.DisplayState switch { WindowDisplayState.Maximized => L.T("最大化"), WindowDisplayState.Minimized => L.T("最小化・通常位置"), _ => L.T("通常") };
             var missing = _planned && saved.Monitor is not null && !monitors.Any(m => m.DeviceName == saved.Monitor.DeviceName);
             var title = string.IsNullOrWhiteSpace(saved.Title) ? Path.GetFileNameWithoutExtension(saved.ExecutablePath) : saved.Title;
-            var detail = $"{state} · {bounds.Width} × {bounds.Height} · ({bounds.Left}, {bounds.Top}){(missing ? " · 接続中のモニターへ移動" : "")}";
+            var detail = $"{state} · {bounds.Width} × {bounds.Height} · ({bounds.Left}, {bounds.Top}){(missing ? L.T(" · 接続中のモニターへ移動") : "")}";
             var shape = new Grid { ToolTip = $"{number}. {title}\n{detail}", ClipToBounds = true };
             shape.Children.Add(new Rectangle { Stroke = color, StrokeThickness = 1.5, Fill = new SolidColorBrush(Color.FromArgb(42, color.Color.R, color.Color.G, color.Color.B)),
                 StrokeDashArray = saved.DisplayState == WindowDisplayState.Minimized ? new DoubleCollection([4, 3]) : null });

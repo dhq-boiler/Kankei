@@ -1,7 +1,7 @@
 version: 3
 title: Kankei MVP
 createdAt: 2026-09-11T05:47:00.6493944Z
-modifiedAt: 2026-09-11T09:53:03.2599573Z
+modifiedAt: 2026-09-11T10:25:16.5299767Z
 tasks:
 - id: initial-vertical-slice
   title: 初期縦切り（保存・復元・オーバーレイ・ローカル API）
@@ -78,3 +78,12 @@ tasks:
   estimateHours: 3
   remainingHours: 0
   notes: Chromeの選択中タブのHTTP(S) URLを保存し、復元時はURL一致を確認して再利用。元ウィンドウが別ページへ移動していたら上書きせず新規ウィンドウを作成。YouTube専用処理と旧データ互換を維持。URL正規化・同じHWNDの別ページ・候補なし・重複呼び出し・起動失敗を検証し、JidoDebuggerで実画面を確認。 2026-09-11 実装完了。VS2026ビルド成功、112テスト成功。JidoDebuggerとRESTで別ページに移動した元ChromeのURLを保持した新規ウィンドウ復元、繰り返し呼び出し時の再利用、背景タブの選択とURL確認、モニター上の最大化を実機確認。検証用Chrome2ウィンドウと一時プロファイルは削除済み。旧プロファイルはページを開いて再保存が必要。日本語プロファイルのAPI作成LocationヘッダーもURLエンコードして201応答を確認。
+- id: language-i18n
+  title: Languageボタンと日本語・英語の切替を実装
+  estimateHours: 4
+  remainingHours: 0
+  notes: >-
+    バージョン情報の隣にLanguageボタンを追加。言語リソースを分離し、日本語/Englishを即時切替・次回起動へ永続化。メイン画面、配置プレビュー、バージョン情報、トレイ、確認・進捗メッセージを対応。プロファイル名やAPI契約は変えない。英語のレイアウト、切替時の選択保持、再起動後の保持をJidoDebuggerで確認。
+
+
+    2026-09-11 実装完了。日本語メッセージIDと英語JSONカタログ、即時切替とlanguage.jsonへの原子的保存を追加。VS2026ビルド成功、118テスト成功（設定往復・不正設定・保存失敗・翻訳プレースホルダー検証を含む）。JidoDebuggerで英語のメイン・About・配置マップ、選択とチェックの保持、再起動後のEnglish保持、削除確認のYes/No表示とNoでの取消を確認。言語設定は日本語へ戻した。トレイ文言はメニューを開く際に選択言語で更新する。

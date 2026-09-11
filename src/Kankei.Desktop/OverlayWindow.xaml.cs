@@ -14,12 +14,12 @@ public partial class OverlayWindow : Window
 
     public void Update(string layoutName, RestoreJob job)
     {
-        TitleText.Text = $"還景 ── 「{layoutName}」レイアウトを復元中";
+        TitleText.Text = L.F("還景 ── 「{0}」レイアウトを復元中", layoutName);
         var complete = job.Items.Count(x => x.Status is RestoreItemStatus.Completed or RestoreItemStatus.Failed or RestoreItemStatus.Skipped);
-        ProgressText.Text = $"{complete} / {job.Items.Count} 完了";
+        ProgressText.Text = L.F("{0} / {1} 完了", complete, job.Items.Count);
         ItemsList.ItemsSource = job.Items.Select(x => $"{StatusIcon(x.Status)} {Path.GetFileNameWithoutExtension(x.ExecutablePath)}  {x.Detail ?? StatusText(x.Status)}").ToList();
     }
 
     private static string StatusIcon(RestoreItemStatus status) => status switch { RestoreItemStatus.Completed => "☑", RestoreItemStatus.Failed => "×", _ => "⏳" };
-    private static string StatusText(RestoreItemStatus status) => status switch { RestoreItemStatus.Launching => "起動中", RestoreItemStatus.Restoring => "復元中", _ => "待機中" };
+    private static string StatusText(RestoreItemStatus status) => status switch { RestoreItemStatus.Launching => L.T("起動中"), RestoreItemStatus.Restoring => L.T("復元中"), _ => L.T("待機中") };
 }
