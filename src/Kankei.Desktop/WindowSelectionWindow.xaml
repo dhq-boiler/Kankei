@@ -1,0 +1,51 @@
+<Window x:Class="Kankei.Desktop.WindowSelectionWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Kankei — 配置の保存・復元" Width="760" Height="660" MinWidth="600" MinHeight="540"
+        WindowStartupLocation="CenterScreen" Background="#F5F7FA">
+    <DockPanel Margin="24">
+        <StackPanel DockPanel.Dock="Top">
+            <TextBlock Text="保存済みの配置を復元" FontSize="20" FontWeight="SemiBold" />
+            <Grid x:Name="RestorePanel" Margin="0,10,0,8">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+                <ComboBox x:Name="SavedLayouts" AutomationProperties.AutomationId="SavedLayouts"
+                          AutomationProperties.Name="復元するレイアウト" DisplayMemberPath="Name" SelectedValuePath="Id"
+                          SelectionChanged="RestoreSelectionChanged" MinWidth="180" Padding="6">
+                    <ComboBox.ItemContainerStyle>
+                        <Style TargetType="ComboBoxItem">
+                            <Setter Property="AutomationProperties.Name" Value="{Binding Name}" />
+                            <Setter Property="AutomationProperties.AutomationId" Value="{Binding Id}" />
+                        </Style>
+                    </ComboBox.ItemContainerStyle>
+                </ComboBox>
+                <Button Grid.Column="1" Content="更新" Click="RefreshLayoutsClick" Padding="10,6" Margin="8,0" />
+                <Button Grid.Column="2" x:Name="RestoreButton" AutomationProperties.AutomationId="RestoreSelected"
+                        Content="選択した配置を復元" Click="RestoreClick" Padding="12,6" IsEnabled="False" />
+            </Grid>
+            <TextBlock x:Name="RestoreStatusText" AutomationProperties.AutomationId="RestoreStatus" Text="保存済みの配置を読み込み中…" TextWrapping="Wrap" Margin="0,0,0,18" />
+            <TextBlock Text="保存するウィンドウを選択" FontSize="24" FontWeight="SemiBold" />
+            <TextBlock Text="チェックしたウィンドウの位置・サイズ・表示状態を保存します。" Margin="0,8,0,4" />
+            <CheckBox x:Name="IncludeYouTube" AutomationProperties.AutomationId="IncludeYouTube" IsChecked="True"
+                      Content="Chrome の YouTube 再生リスト・再生位置・一時停止状態も保存" Margin="0,4,0,0" />
+            <StackPanel Orientation="Horizontal" Margin="0,16,0,12">
+                <TextBlock Text="保存名" VerticalAlignment="Center" Margin="0,0,12,0" />
+                <TextBox x:Name="LayoutName" AutomationProperties.AutomationId="LayoutName" Text="default" Width="240" Padding="6" />
+                <Button Content="一覧を更新" Click="RefreshClick" Margin="12,0,0,0" Padding="12,6" />
+            </StackPanel>
+        </StackPanel>
+        <StackPanel DockPanel.Dock="Bottom" Margin="0,12,0,0">
+            <TextBlock x:Name="Status" AutomationProperties.AutomationId="SelectionStatus" TextWrapping="Wrap" Margin="0,0,0,10" />
+            <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                <Button Content="閉じる" Click="CloseClick" Padding="18,8" Margin="0,0,12,0" />
+                <Button x:Name="SaveButton" AutomationProperties.AutomationId="SaveSelection" Content="選択した配置を保存" Click="SaveClick" Padding="18,8" IsEnabled="False" />
+            </StackPanel>
+        </StackPanel>
+        <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled" Background="White">
+            <StackPanel x:Name="WindowList" Margin="12" />
+        </ScrollViewer>
+    </DockPanel>
+</Window>

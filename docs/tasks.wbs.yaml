@@ -1,0 +1,35 @@
+version: 3
+title: Kankei MVP
+createdAt: 2026-09-11T05:47:00.6493944Z
+modifiedAt: 2026-09-11T07:43:45.3163649Z
+tasks:
+- id: initial-vertical-slice
+  title: 初期縦切り（保存・復元・オーバーレイ・ローカル API）
+  estimateHours: 8
+  remainingHours: 0
+  notes: 初回実装。Kudaki 未接続時の fallback として作成。
+- id: mcp-adapter
+  title: MCP アダプター実装
+  estimateHours: 8
+  remainingHours: 2
+  notes: ローカル設定の stdio MCP サーバーと export/launch/import ツールを公式 SDK で接続し、保存・復元に組み込む。 バージョン付き JSON を保持し、未登録アダプターや通信失敗を成功として扱わない。 qa-test-design 検証観点 EQ-1 正常な状態往復、EQ-2 アダプターなし、ER-1 未登録 ID、 ER-2 不正 JSON、BV-1 対応/非対応バージョン、ER-3 ツールエラー、ER-4 タイムアウト・キャンセル。 実接続先のアプリ固有ツール契約は設定で指定する。まず模擬 MCP サーバーで統合検証する。 2026-09-11 Codex：公式 SDK 2.2.0 の stdio 接続、設定検証、状態のバージョン管理、保存・復元への組み込み、タイムアウト・エラー処理を実装。別プロセスの模擬 MCP サーバーを含む24件のテストが成功。Release ビルドは警告0・エラー0。README に設定と制約を記載。残作業2時間は実アプリのツール契約・設定の確認と vs-mcp による画面復元検証。実アプリ接続・UI確認は未実施。
+- id: restore-hardening
+  title: マルチモニター・DPI・識別の堅牢化
+  estimateHours: 8
+  remainingHours: 4
+  notes: 2026-09-11 サブモニターの最大化Chromeがメインへ復元される不具合を修正する。モニター情報と通常位置を記録し、移動後に最大化。検証はサブモニター最大化・負座標・モニター配置変更・切断・旧保存データを対象とする。 実装済み：モニター名/領域/作業領域と通常位置を追加。通常化→対象位置へ移動→最大化/最小化の順序へ修正。旧defaultの負座標にも対応。PerMonitorV2を指定。VS2026ビルド成功、44件テスト成功（実ウィンドウの2画面移動3件を含む）。vs-mcpでYouTube Chromeを保存しDISPLAY2・Left=-1920を確認。残作業は異種DPI・モニター再接続の実機検証と識別の追加堅牢化。
+- id: selective-window-save
+  title: 選んだウィンドウだけの配置保存
+  estimateHours: 3
+  remainingHours: 0
+  notes: 通知領域からウィンドウ一覧を開き、選択した位置・サイズ・表示状態だけを保存する。アプリ全体の内部状態は取得しない。未選択・閉じた対象・同一アプリの複数ウィンドウを検証し、識別できない復元先を誤操作しない。UI と回帰テストで確認する。 2026-09-11 実装完了。選択画面・保存時の再取得・閉じた対象の拒否・上書き確認・タイトル/実体での照合を追加。VS 2026 ビルド成功、35件テスト成功。vs-mcp UI操作で1件だけ保存し、JSONのWindowsが1件かつAdapterId/AdapterStateJsonがnullであることを確認。未選択時の保存禁止と更新時の選択解除も確認。検証用レイアウト selection-check-20260911 を保存。
+- id: named-layout-restore
+  title: 保存済みレイアウトを選択して復元
+  estimateHours: 1
+  remainingHours: 0
+  notes: 保存画面にレイアウト一覧と復元ボタンを追加。保存後と画面再表示時に更新し、未選択と削除済み対象を扱う。通知領域からもアクセス可能にする。 追加要望によりトレイ右クリックにも全プロファイルを動的表示。2026-09-11 VSビルド成功、既存44テスト成功。JidoDebuggerのstdio MCP経由UIAで別名monitor-check-20260911の選択・復元完了を確認。トレイ右クリック→復元サブメニューにモンハンワイルズ_VC/default/検証用プロファイルが表示されることも確認。
+- id: youtube-playback-state
+  title: ChromeのYouTube再生リスト・再生位置・一時停止状態を保存復元
+  estimateHours: 5
+  remainingHours: 1
+  notes: 選択したChromeウィンドウのYouTube動画URL・list/index・再生秒数・再生/一時停止を保存する。通常動画/再生リスト/一時停止/再生中/取得失敗/古い配置データを検証し、取得不能を黙って保存成功にしない。JidoDebuggerで実画面確認する。 手動呼び出し時は対象Chromeが再生中なら呼び出し直前の状態を一時保持して配置復元後に適用する。シャットダウン直前にも最新状態を取得し次回レジューム用に永続化する。プロファイルの配置定義と最新の再生チェックポイントは分離する。 2026-09-11 実装済み：現在の再生状態を優先する手動復元、既存Chromeの動画/再生リスト照合による二重起動防止、10秒ごとと終了/SessionEnding時のチェックポイント保存、原子的ファイル置換と旧記録保護。VS2026ビルド成功、77テスト成功。JidoDebuggerで保存時3:01:05から3:01:06の一時停止復元、現在位置優先の復元、新規Chrome起動後の停止復元、番号不一致でも既存ウィンドウを再利用し二重起動しないことを確認。検証用の追加Chromeは閉じ、一時プロファイルも削除。残り1時間は実Windowsシャットダウン/再起動順序と広告・低速回線下の実機確認。実シャットダウンは未実行。
