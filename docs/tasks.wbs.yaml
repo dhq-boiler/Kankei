@@ -1,13 +1,13 @@
 version: 3
 title: Kankei MVP
 createdAt: 2026-09-11T05:47:00.6493944Z
-modifiedAt: 2026-09-11T11:39:19.9395024Z
+modifiedAt: 2026-09-11T15:00:00Z
 tasks:
 - id: release-0-1-8
   title: YouTube早送り連打修正をv0.1.8として公開
   estimateHours: 0.25
-  remainingHours: 0.25
-  notes: 先生のリリース指示に基づく。既存130テストとVS2026ビルド成功。修正とREADMEをコミットしタグをpush、Actionsのテスト・パッケージ生成と公開アセット・更新フィードを確認する。
+  remainingHours: 0
+  notes: 先生のリリース指示に基づく。既存130テストとVS2026ビルド成功。修正5629e9cをmainとv0.1.8タグへpush。GitHub ActionsのCI 34613203660とRelease 34613203398が成功。正式ReleaseにSetup.exe・Portable.zip・full.nupkg・更新フィードを公開し、日本語リリースノートを記載。取得したreleases.win.jsonのVersion=0.1.8、ファイル名とサイズ91713887が公開nupkgと一致することを確認。ユーザー環境のインストール更新は未実施。
 - id: youtube-restore-seek-loop
   title: YouTube復元時のフォーカス移動と早送りキー連打を解消
   estimateHours: 1
