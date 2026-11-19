@@ -6,11 +6,13 @@ tasks:
 - id: release-0-1-9
   title: モニター間D&D移動をv0.1.9として公開
   estimateHours: 0.25
-  remainingHours: 0.25
+  remainingHours: 0
   notes: >-
     2026-11-19 先生のコミット・新バージョン公開指示に基づく。Kudaki MCP未公開・プロセス未起動のため停止時fallback。
     VS2026ビルドと全140テスト成功、専用ホストで一覧/図からの3画面間D&D・右クリック移動・モニター外ドロップ・復元予定切替を確認済み。
-    対象変更を日本語コミットにまとめ、mainとv0.1.9タグをpushし、GitHub ActionsのCI/Releaseと配布ファイル・更新フィードを確認する。
+    機能コミット7bed5a6をmainとv0.1.9タグへpush。CI 44514065422・Release 44514065410の成功を確認。
+    正式Release https://github.com/dhq-boiler/Kankei/releases/tag/v0.1.9 にSetup.exe・Portable.zip・full.nupkg・更新フィードを公開し日本語リリースノートを反映。
+    公開releases.win.jsonのVersion=0.1.9、FileName=KankeiApp-0.1.9-full.nupkg、Size=91786413、SHA256=8318aecbfc129e15fd4a4ac82d1b6408c023b6cead5f80afd0d4737bca5a7031がRelease asset情報と一致。
     作業前からの未追跡ロゴ原画・素材README・生成スクリプトは含めない。インストール更新は今回の公開作業に含めない。
 - id: live-window-drag-move
   title: 起動中ウィンドウをドラッグして別モニターへ移動
