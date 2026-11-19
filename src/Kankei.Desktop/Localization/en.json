@@ -116,5 +116,14 @@
   "API連携…": "API integration…",
   "API連携": "API integration",
   "配置を削除…": "Delete layout…",
-  "言語設定を保存できませんでした": "Could not save the language setting"
+  "言語設定を保存できませんでした": "Could not save the language setting",
+  "起動中のウィンドウ": "Open windows",
+  "ウィンドウの移動": "Move windows",
+  "最大化・最小化を保ってモニター間を移動します。Escでドラッグを取り消せます。保存済みの配置は変更しません。": "Move between monitors while keeping maximized or minimized state. Press Esc to cancel dragging. Saved layouts stay unchanged.",
+  "起動中 {0} 件 · 図または一覧から移動先のモニターへドラッグ。右クリックでも移動できます。": "{0} open windows · Drag from the map or list onto a destination monitor. You can also right-click to move.",
+  "{0} へ移動": "Move to {0}",
+  "「{0}」を {1} へ移動しました。": "Moved “{0}” to {1}.",
+  "ウィンドウを移動できませんでした: ": "Could not move the window: ",
+  "対象ウィンドウは閉じられたか、移動できなくなりました。一覧を更新してください。": "The window was closed or is no longer available. Refresh the list.",
+  "移動先のモニターが切断されました。一覧を更新してください。": "The destination monitor was disconnected. Refresh the list."
 }

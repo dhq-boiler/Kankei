@@ -1,7 +1,7 @@
 <Window x:Class="Kankei.Desktop.WindowSelectionWindow"
  xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
  xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" xmlns:i18n="clr-namespace:Kankei.Desktop" xmlns:local="clr-namespace:Kankei.Desktop"
- Title="{i18n:Translate 'Kankei — 配置の保存・復元'}" Width="1100" Height="850" MinWidth="800" MinHeight="760"
+ Title="{i18n:Translate 'Kankei — 配置の保存・復元'}" Width="1100" Height="950" MinWidth="800" MinHeight="760"
  Style="{StaticResource {x:Type Window}}" WindowStartupLocation="CenterScreen" Icon="pack://application:,,,/Assets/Icons/kankei.ico">
  <Grid Margin="28">
   <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="*"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>

@@ -4,16 +4,22 @@
     <Border Style="{StaticResource Card}">
         <Grid>
             <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition Height="*"/><RowDefinition Height="Auto"/><RowDefinition Height="110"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
-            <DockPanel><TextBlock Text="{i18n:Translate '配置プレビュー'}" FontSize="19" FontWeight="SemiBold"/><TextBlock x:Name="MonitorCount" HorizontalAlignment="Right" Foreground="{StaticResource MutedBrush}" VerticalAlignment="Center"/></DockPanel>
+            <DockPanel><TextBlock x:Name="PreviewHeading" Text="{i18n:Translate '配置プレビュー'}" FontSize="19" FontWeight="SemiBold"/><TextBlock x:Name="MonitorCount" HorizontalAlignment="Right" Foreground="{StaticResource MutedBrush}" VerticalAlignment="Center"/></DockPanel>
             <StackPanel Grid.Row="1" Margin="0,16,0,0">
+                <StackPanel x:Name="LiveControls" Orientation="Horizontal" Visibility="Collapsed">
+                    <Button x:Name="LiveButton" Content="{i18n:Translate '起動中のウィンドウ'}" Click="LiveClick" AutomationProperties.AutomationId="LiveWindows" Margin="0,0,8,0"/>
+                    <Button x:Name="PlannedButton" Content="{i18n:Translate '復元予定'}" Click="PlannedClick" AutomationProperties.AutomationId="PlannedWindows" Margin="0,0,8,0"/>
+                    <Button Content="{i18n:Translate '一覧を更新'}" Click="RefreshClick" AutomationProperties.AutomationId="RefreshLiveWindows"/>
+                </StackPanel>
                 <TextBlock x:Name="Summary" Foreground="{StaticResource MutedBrush}" TextWrapping="Wrap" Margin="0,12,0,0" AutomationProperties.AutomationId="PreviewSummary"/>
+                <TextBlock x:Name="MoveStatus" TextWrapping="Wrap" AutomationProperties.AutomationId="MoveStatus" Margin="0,4,0,0"/>
             </StackPanel>
             <Border Grid.Row="2" Background="#101925" BorderBrush="{StaticResource LineBrush}" BorderThickness="1" CornerRadius="12" Margin="0,18,0,14" ClipToBounds="True" MinHeight="190">
-                <Canvas x:Name="Map" SizeChanged="MapSizeChanged" AutomationProperties.AutomationId="MonitorMap"/>
+                <Canvas x:Name="Map" Background="Transparent" AllowDrop="True" DragOver="MapDragOver" DragLeave="MapDragLeave" Drop="MapDrop" SizeChanged="MapSizeChanged" AutomationProperties.AutomationId="MonitorMap"/>
             </Border>
             <TextBlock Grid.Row="3" Text="{i18n:Translate 'ウィンドウ一覧 · ポインターを重ねると位置を強調'}" Foreground="{StaticResource MutedBrush}" FontSize="11" Margin="0,0,0,8"/>
             <ScrollViewer Grid.Row="4" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled"><StackPanel x:Name="Entries"/></ScrollViewer>
-            <TextBlock Grid.Row="5" Text="{i18n:Translate '現在のモニター構成に合わせた位置の目安です。最小化は通常位置を破線で表示します。'}" TextWrapping="Wrap" Foreground="{StaticResource MutedBrush}" FontSize="11" Margin="0,12,0,0"/>
+            <TextBlock x:Name="PreviewHint" Grid.Row="5" TextWrapping="Wrap" Foreground="{StaticResource MutedBrush}" FontSize="11" Margin="0,12,0,0"/>
         </Grid>
     </Border>
 </UserControl>

@@ -10,6 +10,46 @@ public class MonitorRestoreIntegrationTests
     [InlineData(WindowDisplayState.Normal)]
     [InlineData(WindowDisplayState.Maximized)]
     [InlineData(WindowDisplayState.Minimized)]
+    public void EQ1_LiveMoveKeepsStateOnDestinationMonitor(WindowDisplayState state)
+    {
+        Exception? failure = null;
+        var thread = new Thread(() =>
+        {
+            var previous = SetThreadDpiAwarenessContext(new IntPtr(-4));
+            try
+            {
+                var source = MonitorPlacement.Capture(Forms.Screen.PrimaryScreen!);
+                var target = MonitorPlacement.Capture(Forms.Screen.AllScreens.First(x => !x.Primary));
+                using var window = new Forms.Form { Text = "Kankei live move regression test", StartPosition = Forms.FormStartPosition.Manual,
+                    Bounds = new System.Drawing.Rectangle(source.WorkArea.Left + 80, source.WorkArea.Top + 80, 640, 480) };
+                window.Show();
+                window.WindowState = state switch { WindowDisplayState.Maximized => Forms.FormWindowState.Maximized,
+                    WindowDisplayState.Minimized => Forms.FormWindowState.Minimized, _ => Forms.FormWindowState.Normal };
+                Forms.Application.DoEvents();
+                var current = new SavedWindow("test", "test", window.Left, window.Top, window.Width, window.Height, state,
+                    Monitor: source, NormalBounds: new(source.WorkArea.Left + 80, source.WorkArea.Top + 80, 640, 480));
+                RestoreOrchestrator.RestorePlacement(window.Handle, LiveWindowMove.PlacementOn(current, target));
+                Forms.Application.DoEvents();
+                Assert.Equal(target.DeviceName, Forms.Screen.FromHandle(window.Handle).DeviceName);
+                Assert.Equal(state switch { WindowDisplayState.Maximized => Forms.FormWindowState.Maximized,
+                    WindowDisplayState.Minimized => Forms.FormWindowState.Minimized, _ => Forms.FormWindowState.Normal }, window.WindowState);
+                window.WindowState = Forms.FormWindowState.Normal;
+                Forms.Application.DoEvents();
+                Assert.Equal(target.DeviceName, Forms.Screen.FromHandle(window.Handle).DeviceName);
+            }
+            catch (Exception ex) { failure = ex; }
+            finally { SetThreadDpiAwarenessContext(previous); }
+        }) { IsBackground = true };
+        thread.SetApartmentState(ApartmentState.STA);
+        thread.Start();
+        Assert.True(thread.Join(TimeSpan.FromSeconds(20)), "Live move test timed out.");
+        if (failure is not null) System.Runtime.ExceptionServices.ExceptionDispatchInfo.Capture(failure).Throw();
+    }
+
+    [MultiMonitorTheory]
+    [InlineData(WindowDisplayState.Normal)]
+    [InlineData(WindowDisplayState.Maximized)]
+    [InlineData(WindowDisplayState.Minimized)]
     public void RestoreMovesRealWindowFromPrimaryToSecondary(WindowDisplayState state)
     {
         Exception? failure = null;

@@ -24,6 +24,7 @@ public partial class WindowSelectionWindow : Window
         _discovery = discovery;
         _store = store;
         _orchestrator = orchestrator;
+        Preview.EnableLive(discovery);
         Activated += async (_, _) =>
         {
             if (!_dialogOpen && !IsBusy) await RefreshLayoutsAsync();
@@ -129,6 +130,7 @@ public partial class WindowSelectionWindow : Window
     private void SetOperationEnabled(bool enabled)
     {
         ProfileBar.IsEnabled = enabled;
+        Preview.IsEnabled = enabled;
     }
 
     private async Task DeleteAsync(Layout selected)
